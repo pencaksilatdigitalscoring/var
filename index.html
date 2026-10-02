@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2 CAHAYA DIGITAL SCORING - Pencak Silat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <!-- Library untuk Export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Library untuk Manajemen Excel (SheetJS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+        body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; height: 100vh; width: 100vw; overflow: hidden; }
+        
+        .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; position: absolute; top: 0; left: 0; background: #f8fafc; }
+        .screen.active { display: flex; }
+
+        /* HALAMAN LOGIN & REGISTRASI */
+        #screen-login, #screen-registration {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.6) 0%, transparent 50%), 
+                              url('https://www.transparenttextures.com/patterns/subtle-white-feathers.png');
+            overflow-y: auto;
+        }
+        .login-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* BACKGROUND MENU AWAL */
+        #screen-landing {
+            background-color: #1e293b;
+            background-image: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.6)), url('https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=1600&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* MENU SLIDER STYLES */
+        .menu-slider-container {
+            display: flex;
+            overflow-x: auto;
+            snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .menu-slider-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
+        }
+        .menu-slide {
+            min-width: 100%;
+            snap-align: start;
+            padding: 10px;
+        }
+        .dot-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transition: all 0.3s;
+        }
+        .dot-indicator.active {
+            background: #10b981;
+            width: 20px;
+            border-radius: 10px;
+        }
+
+        /* Navigasi Kursor untuk Laptop */
+        .slider-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .slider-nav-btn:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-50%) scale(1.1); }
+        .slider-nav-btn:active { transform: translateY(-50%) scale(0.9); }
+        .slider-nav-btn.left { left: -60px; }
+        .slider-nav-btn.right { right: -60px; }
+        
+        @media (max-width: 768px) {
+            .slider-nav-btn { display: none; }
+        }
+
+        .btn-raise { transition: all 0.1s; border-bottom-width: 4px !important; position: relative; top: 0; }
+        .btn-raise:active { top: 2px !important; border-bottom-width: 1px !important; transform: scale(0.98); }
+        
+        .btn-pressed { top: 3px !important; border-bottom-width: 0px !important; background-color: #fbbf24 !important; color: #000 !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2) !important; border-color: #d97706 !important; }
+
+        .btn-compact { padding: 5px 2px; font-size: 7px; font-weight: 800; border-radius: 8px; border: 1px solid #e2e8f0; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; text-transform: uppercase; line-height: 1.2; }
+        
+        /* LAPTOP OPTIMIZATION FOR DEWAN PINALTY BUTTONS */
+        @media (min-width: 1024px) {
+            #dw-controls-area .btn-compact {
+                padding: 15px 5px;
+                font-size: 10px;
+                border-radius: 12px;
+                gap: 5px;
+            }
+            #dw-controls-area .btn-compact i {
+                font-size: 18px;
+            }
+        }
+
+        .active-babak { background-color: #10b981 !important; color: white !important; border-color: #059669 !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.6); }
+        
+        .sudut-merah-bg { background-color: #ef4444; color: white; }
+        .sudut-biru-bg { background-color: #3b82f6; color: white; }
+        
+        .leader-glow { box-shadow: 0 0 25px rgba(251, 191, 36, 0.8) !important; border: 4px solid #fbbf24 !important; z-index: 10; transform: scale(1.02); }
+
+        .custom-scroll { overflow-y: auto; }
+        .custom-scroll::-webkit-scrollbar { width: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .save-notif { position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 15px 25px; border-radius: 15px; font-weight: bold; transform: translateX(200%); transition: 0.5s; z-index: 60000; }
+        .save-notif.show { transform: translateX(0); }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        .modal-overlay.active { display: flex; }
+        
+        .circle-vote { width: 70px; height: 70px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; color: white; border: 4px solid rgba(0,0,0,0.1); border-bottom-width: 6px; position: relative; top: 0; transition: all 0.2s; font-size: 8px; text-transform: uppercase; }
+        .circle-active { border: 6px solid #1e293b !important; box-shadow: 0 0 25px rgba(0,0,0,0.4); transform: scale(1.1); }
+        .jr-vote-locked { pointer-events: none; opacity: 0.6; }
+        .jr-vote-selected { opacity: 1 !important; }
+
+        .status-header { font-size: 8px; font-weight: 800; text-transform: uppercase; padding: 6px; border-radius: 8px; text-align: left; margin-bottom: 2px; line-height: 1.3; border: 1px solid #e2e8f0; transition: all 0.3s; }
+
+        .input-sekre { font-size: 10px; font-weight: 700; border-radius: 6px; padding: 6px; outline: none; text-transform: uppercase; width: 100%; border: 1px solid rgba(0,0,0,0.1); }
+        .label-sekre { font-size: 8px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; display: block; }
+
+        .jr-hit-btn { transition: all 0.05s; }
+        .jr-hit-btn:active { background-color: #fbbf24 !important; color: #000 !important; box-shadow: 0 0 30px #fbbf24 !important; transform: scale(0.95); }
+        .jr-hit-btn-off { background-color: #64748b !important; opacity: 0.5 !important; pointer-events: none !important; border-bottom: none !important; }
+
+        .op-btn { font-size: 7px; padding: 6px 8px; border-radius: 6px; font-weight: 900; text-transform: uppercase; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; }
+        .op-btn:active { transform: scale(0.9); }
+        .btn-inactive { background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; }
+        .btn-bertanding { background: #10b981 !important; color: white !important; border-color: #059669 !important; box-shadow: 0 0 20px #10b981; animation: pulse-green 2s infinite; }
+        .btn-persiapan { background: #f59e0b !important; color: white !important; border-color: #d97706; box-shadow: 0 0 20px #f59e0b; animation: pulse-orange 2s infinite; }
+        .btn-selesai { background: #6366f1 !important; color: white !important; border-color: #4f46e5; box-shadow: 0 0 20px #6366f1; }
+
+        /* MONITOR PENALTY ICONS (FOR WHITE BACKGROUND) */
+        .mon-pen-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #cbd5e1; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.3s; }
+        .mon-pen-active-b { color: #fff !important; background-color: #fbbf24 !important; box-shadow: 0 0 10px #fbbf24; border-color: #fff !important; }
+        .mon-pen-active-m { color: #fff !important; background-color: #fbbf24 !important; box-shadow: 0 0 10px #fbbf24; border-color: #fff !important; }
+        
+        /* JUDGE SQUARE MONITOR */
+        .mon-jr-indicator { width: 32px; height: 32px; border-radius: 4px; border: 1.5px solid rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #cbd5e1; transition: all 0.2s; }
+        .mon-jr-active { background: #1e293b !important; color: #fff !important; border-color: #fbbf24 !important; box-shadow: 0 0 15px rgba(0,0,0,0.4); transform: scale(1.1); }
+
+        /* TECH ICONS UNDER VS */
+        .mon-tech-mid-icon { width: 32px; height: 32px; border-radius: 6px; border: 1.5px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #cbd5e1; transition: all 0.2s; background: #fff; }
+        .mon-tech-mid-active { background: #fbbf24 !important; color: #1e293b !important; border-color: #fff !important; box-shadow: 0 0 15px rgba(251, 191, 36, 0.6); transform: scale(1.2); }
+
+        /* MONITOR DROPPING BOX */
+        .mon-dropping-box { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; text-align: center; margin-bottom: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 48px; }
+        .mon-dropping-label { font-size: 6px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 1px; }
+        .mon-dropping-val { font-size: 12px; font-weight: 900; color: #0f172a; line-height: 1; }
+
+        .dw-correct-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 8px; font-weight: 900; border-radius: 4px; padding: 3px 6px; transition: all 0.1s; }
+        .dw-correct-btn:active { background: #fbbf24 !important; color: #000 !important; transform: scale(0.9); }
+        .dw-add-btn { background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4); color: white; font-size: 8px; font-weight: 900; border-radius: 4px; padding: 3px 6px; transition: all 0.1s; }
+        .dw-add-btn:active { background: #10b981 !important; color: white !important; transform: scale(0.9); }
+
+        .juri-lamp { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 5px; border: 1px solid rgba(0,0,0,0.1); }
+        .juri-lamp-red { background-color: #ef4444; box-shadow: 0 0 5px #ef4444; }
+        .juri-lamp-green { background-color: #10b981; box-shadow: 0 0 5px #10b981; }
+
+        .stats-table-container { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: white; border-radius: 12px; margin-bottom: 8px; }
+        .stats-table-container.open { max-height: 500px; border: 1px solid #e2e8f0; padding: 6px; }
+        .stats-table { width: 100%; text-align: center; border-collapse: collapse; font-size: 7.5px; font-weight: 800; }
+        .stats-table th { border: 1px solid #e2e8f0; padding: 4px; background: #f1f5f9; }
+        .stats-table td { border: 1px solid #e2e8f0; padding: 6px; }
+
+        .tie-table { width: 100%; text-align: center; border-collapse: collapse; font-size: 10px; }
+        .tie-table th { padding: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; text-transform: uppercase; font-weight: 800; }
+        .tie-table td { padding: 10px; border: 1px solid #e2e8f0; font-weight: 700; }
+        .tie-row-blue { background-color: #eff6ff; color: #1e40af; }
+        .tie-row-red { background-color: #fef2f2; color: #991b1b; }
+
+        .btn-rotate { position: fixed; bottom: 85px; right: 20px; width: 45px; height: 45px; background: #1e293b; color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 50000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.1); transition: all 0.3s; }
+        .btn-rotate-mini { width: 28px; height: 28px; background: rgba(255,255,255,0.1); color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; border: 1px solid rgba(255,255,255,0.2); }
+
+        @keyframes slideInDown { from { transform: translate3d(0, -100%, 0); visibility: visible; } to { transform: translate3d(0, 0, 0); } }
+        .juri-alert-ani { animation: slideInDown 0.5s ease-out; }
+
+
+        /* MONITOR LANDSCAPE & LAPTOP BUTTON HEADER */
+        .mon-header-small-btn { 
+            width: 28px; 
+            height: 28px; 
+            background: #f1f5f9; 
+            border: 1px solid #e2e8f0; 
+            color: #64748b; 
+            border-radius: 6px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .mon-header-small-btn:active { transform: scale(0.9); background: #e2e8f0; }
+
+        /* MODE LAPTOP MONITOR (OPTIMIZED) */
+        .monitor-laptop-mode { padding: 30px 60px !important; overflow: auto !important; background: #ffffff !important; }
+        .monitor-laptop-mode #mon-timer-disp { font-size: 38px !important; margin-bottom: 10px; color: #0f172a !important; } 
+        .monitor-laptop-mode #mon-match-info-header { padding: 15px !important; font-size: 14px !important; border-radius: 15px; margin-bottom: 25px !important; }
+        .monitor-laptop-mode .mon-card-box { min-height: 380px !important; max-height: 380px !important; border-radius: 3rem !important; border-bottom-width: 15px !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+        .monitor-laptop-mode .mon-score-val { font-size: 180px !important; margin: 0 !important; font-weight: 900 !important; }
+        .monitor-laptop-mode .mon-name-val { font-size: 26px !important; }
+        .monitor-laptop-mode .mon-kont-val { font-size: 18px !important; }
+        .monitor-laptop-mode .mon-pen-icon { width: 55px !important; height: 55px !important; font-size: 26px !important; border-radius: 12px !important; border-width: 2px !important; }
+        .monitor-laptop-mode .mon-jr-indicator { width: 65px !important; height: 65px !important; font-size: 24px !important; border-radius: 14px !important; border-width: 3px !important; }
+        .monitor-laptop-mode .mon-tech-mid-icon { width: 65px !important; height: 65px !important; font-size: 32px !important; border-radius: 14px !important; border-width: 3px !important; }
+        .monitor-laptop-mode .avatar-circle { width: 100px !important; height: 100px !important; }
+        .monitor-laptop-mode .mon-dropping-box { min-width: 90px; padding: 12px; margin-bottom: 20px; }
+        .monitor-laptop-mode .mon-dropping-val { font-size: 28px; }
+        .monitor-laptop-mode .mon-dropping-label { font-size: 10px; }
+        .monitor-laptop-mode .mon-round-indicator { width: 45px !important; height: 45px !important; font-size: 18px !important; border-radius: 10px !important; margin-bottom: 8px; }
+        .monitor-laptop-mode .mon-center-divider { width: 120px !important; }
+        .monitor-laptop-mode .mon-kejuaraan-header { padding: 15px 30px; margin-bottom: 20px; }
+        .monitor-laptop-mode .mon-logo-side { width: 80px; height: 80px; }
+        .monitor-laptop-mode .mon-kejuaraan-title-text h1 { font-size: 18px; }
+        .monitor-laptop-mode .mon-kejuaraan-title-text h2 { font-size: 16px; }
+
+        /* HEADER JUDUL MONITOR */
+        .mon-kejuaraan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            border-bottom: 2px solid #f1f5f9;
+            padding: 10px 20px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .mon-logo-side { width: 60px; height: 60px; object-fit: contain; }
+        .mon-kejuaraan-title-text { text-align: center; flex: 1; }
+        .mon-kejuaraan-title-text h1 { font-size: 14px; font-weight: 800; color: #1e293b; text-transform: uppercase; line-height: 1.2; }
+        .mon-kejuaraan-title-text h2 { font-size: 12px; font-weight: 700; color: #10b981; text-transform: uppercase; }
+
+        /* MATCH LIST MONITOR STYLES (ADJUSTED FOR WHITE BG) */
+        .mon-match-list-area { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 2rem; padding: 20px; overflow: hidden; }
+        .mon-table-header { background: #f1f5f9; color: #1e293b; text-transform: uppercase; font-weight: 900; font-size: 10px; }
+        .mon-match-row { border-bottom: 1px solid #f1f5f9; transition: all 0.3s; }
+        .mon-match-row:hover { background: #f8fafc; }
+        .mon-cell-blue { background: rgba(59, 130, 246, 0.05); border-left: 4px solid #3b82f6; color: #1e293b; }
+        .mon-cell-red { background: rgba(239, 68, 68, 0.05); border-left: 4px solid #ef4444; color: #1e293b; }
+        .mon-nav-btn { background: #f1f5f9; color: #64748b; padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 10px; text-transform: uppercase; border: 1px solid #e2e8f0; }
+        .mon-toggle-active { background: #1e293b !important; color: white !important; }
+
+        /* CSS LAPORAN PERTANDINGAN - REVISED PROFESSIONAL */
+        .report-page { background: white; width: 210mm; min-height: 297mm; padding: 15mm; margin: auto; box-shadow: 0 0 20px rgba(0,0,0,0.1); color: #000; font-family: 'Times New Roman', serif; }
+        .report-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 9px; }
+        .report-table th, .report-table td { border: 1px solid #000; padding: 5px; text-align: center; }
+        .report-header { text-align: center; margin-bottom: 20px; border-bottom: 3px double #000; padding-bottom: 10px; }
+        .report-title { font-size: 16px; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+        .report-subtitle { font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .report-section-header { font-weight: 900; text-transform: uppercase; border-bottom: 1px solid black; margin-top: 15px; margin-bottom: 5px; font-size: 10px; display: block; }
+        .report-info-grid { grid-template-cols: 1fr 1fr; gap: 10px; font-size: 10px; margin-bottom: 15px; text-transform: uppercase; font-weight: bold; display: grid; }
+
+        /* FILTER SELECT STYLING */
+        .filter-select { background: transparent; border: none; font-size: 7px; font-weight: 900; color: white; cursor: pointer; outline: none; text-align: center; width: 100%; }
+        .filter-select option { color: black; background: white; }
+
+        /* INPUT LOTING STYLES */
+        .input-loting { width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 10px; font-weight: 700; outline: none; }
+        .input-loting:focus { border-color: #rose-500; ring: 2px ring-rose-200; }
+
+        /* STYLES KHUSUS MENU BRACKET BARU */
+        :root {
+            --blue-corner: #3b82f6;
+            --red-corner: #ef4444;
+            --match-height: 85px; 
+            --match-width: 240px;  
+        }
+        .bracket-full-screen { width: 100%; height: 100%; overflow: auto; display: flex; align-items: center; }
+        .bracket-wrapper-new { display: flex; padding: 100px; min-width: max-content; align-items: stretch; }
+        .round-column-new { display: flex; flex-direction: column; justify-content: space-around; width: var(--match-width); margin-right: 80px; position: relative; }
+        .round-header-new { position: absolute; top: -50px; width: 100%; text-align: center; }
+        .round-title-new { background: #f39c12; color: white; font-weight: 700; padding: 6px 15px; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; display: inline-block; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .matchup-new { position: relative; background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; height: var(--match-height); width: var(--match-width); display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.05); z-index: 2; margin: 20px 0; }
+        .player-slot-new { flex: 1; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; overflow: hidden; }
+        .player-slot-new span { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-slot-new small { color: #6c757d; font-size: 0.75rem; }
+        .player-slot-new.blue-new { border-bottom: 1px solid #f1f1f1; border-left: 6px solid var(--blue-corner); border-top-left-radius: 8px; }
+        .player-slot-new.red-new { border-left: 6px solid var(--red-corner); border-bottom-left-radius: 8px; }
+        
+        .slot-gray { background-color: #e2e8f0 !important; color: #94a3b8 !important; border-left-color: #cbd5e1 !important; border-right-color: #cbd5e1 !important; }
+        .slot-gray small { color: #cbd5e1 !important; }
+
+        .connector-new { position: absolute; right: -81px; width: 81px; border: 2px solid #ced4da; border-left: none; z-index: 1; }
+
+        /* TAB STYLE LOTING */
+        .loting-tab-btn { flex: 1; padding: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; border-bottom: 3px solid transparent; color: #94a3b8; transition: all 0.3s; }
+        .loting-tab-btn.active { border-bottom-color: #e11d48; color: #e11d48; background: #fff1f2; }
+
+        /* AVATAR BOX */
+        .avatar-circle { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #f1f5f9; background-color: #f1f5f9; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .avatar-sekre { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: #f1f5f9; }
+        .avatar-mon-table { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #e2e8f0; flex-shrink: 0; }
+
+        /* NEW MONITOR CENTER STYLE (FOR WHITE BG) */
+        .mon-center-divider { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; 
+            padding: 10px;
+            width: 120px;
+            flex-shrink: 0;
+            height: 100%;
+        }
+        .mon-jatuhan-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 8px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .mon-jatuhan-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 4px;
+        }
+        .mon-jatuhan-item span:first-child { font-size: 6px; font-weight: 800; color: #94a3b8; }
+        .mon-jatuhan-item span:last-child { font-size: 10px; font-weight: 900; color: #f59e0b; }
+
+        /* MONITOR PENALTY GRID LAYOUT - VERTICAL */
+        .mon-pen-grid-v {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            height: fit-content;
+            align-self: center;
+            flex-shrink: 0;
+        }
+        
+        .mon-card-box { min-height: 200px; max-height: 200px; transition: all 0.3s; flex-shrink: 0; overflow: hidden; width: 100%; position: relative; }
+
+        /* ANIMASI VAR SHUFFLE */
+        @keyframes varShuffle {
+            0% { background-color: #3b82f6; } /* Biru */
+            33% { background-color: #ef4444; } /* Merah */
+            66% { background-color: #f59e0b; } /* Kuning */
+            100% { background-color: #3b82f6; }
+        }
+        .var-shuffle-1 { animation: varShuffle 0.15s infinite; }
+        .var-shuffle-2 { animation: varShuffle 0.15s infinite 0.05s; }
+        .var-shuffle-3 { animation: varShuffle 0.15s infinite 0.1s; }
+
+        .mon-var-col {
+            width: 100%;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        /* PERBAIKAN MONITOR BABAK I, II, III */
+        .mon-round-indicator {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            transition: all 0.3s;
+            border: 1px solid #e2e8f0;
+        }
+        .mon-round-active {
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-color: #ef4444 !important;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+            transform: scale(1.1);
+        }
+        .mon-round-inactive {
+            background-color: #f1f5f9;
+            color: #cbd5e1;
+        }
+
+        /* ANIMASI PROGRESS BAR VIDEO VAR */
+        @keyframes varProgressAnim { from { width: 100%; } to { width: 0%; } }
+        .var-progress-bar { animation: varProgressAnim 30s linear forwards; }
+
+    </style>
+</head>
+<body>
+
+    <div id="save-ani" class="save-notif shadow-xl"><i class="fas fa-check-circle mr-2"></i> Data Tersimpan!</div>
+    
+    <button id="floating-landscape-btn" onclick="toggleLandscape()" class="btn-rotate">
+        <i class="fas fa-expand"></i>
+    </button>
+
+    <!-- SCREEN LOGIN -->
+    <div id="screen-login" class="screen active justify-center items-center p-8">
+        <div class="login-card p-10 rounded-[2.5rem] w-full max-sm text-center">
+            <div class="mb-8">
+                <div class="w-28 h-28 bg-white rounded-2xl flex items-center justify-center mx-auto shadow-sm border border-emerald-100 mb-6 overflow-hidden">
+                    <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                        <source src="https://github.com/pencaksilatdigitalscoring/BRONZE-DIGITAL-SCORING-PENCAK-SILAT/raw/main/Dua_naga_terbang_menyatu_logo_202608012347.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <p class="text-slate-400 font-extrabold text-[9px] uppercase tracking-[0.3em] mb-2">Selamat Datang di</p>
+                <h1 class="text-slate-800 font-black text-xl uppercase tracking-tighter mb-1">
+                    <span style="color: #CD7F32;">2 CAHAYA</span> DIGITAL SCORING
+                </h1>
+                <p class="text-slate-400 text-[8px] font-bold uppercase tracking-wider">Platform Pencak Silat Digital Scoring Manajemen Terpadu</p>
+            </div>
+            <div class="space-y-4">
+                <div class="relative group">
+                    <input type="password" id="login-pass" class="w-full bg-slate-100/50 border border-slate-200 rounded-2xl py-4 px-6 text-slate-800 text-center font-black placeholder-slate-300 outline-none focus:ring-2 focus:ring-sky-500/20 focus:bg-white focus:border-sky-300 transition-all uppercase tracking-[0.5em]" placeholder="••••••">
+                </div>
+                <button onclick="handleLogin()" class="w-full bg-slate-900 hover:bg-sky-950 text-white font-black py-4 rounded-2xl shadow-lg transition-all transform active:scale-95 uppercase tracking-widest text-[10px]">Akses Sistem</button>
+                
+                <div class="pt-4">
+                    <p class="text-slate-400 text-[8px] font-bold uppercase mb-2">Pendaftaran Peserta Baru?</p>
+                    <button onclick="changeScreen('registration')" class="w-full bg-white border-2 border-slate-900 text-slate-900 font-black py-3 rounded-2xl shadow hover:bg-slate-50 transition-all active:scale-95 uppercase tracking-widest text-[9px]">Daftar Disini</button>
+                </div>
+            </div>
+            <p id="login-error" class="text-red-500 font-black text-[9px] mt-6 uppercase hidden italic"><i class="fas fa-circle-exclamation mr-1"></i> Kata Sandi Salah</p>
+            <div class="mt-8 pt-6 border-t border-slate-100">
+                <p class="text-black font-bold text-[7px] uppercase tracking-widest">Tim <span style="color: #CD7F32;">2 CAHAYA</span> Digital Scoring</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN REGISTRATION (DAFTAR PESERTA) -->
+    <div id="screen-registration" class="screen justify-center items-center p-6 sm:p-10">
+        <div class="login-card p-8 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh] custom-scroll">
+            <div class="text-center mb-6">
+                <h2 class="text-slate-800 font-black text-xl uppercase italic">Registrasi Peserta</h2>
+                <p class="text-slate-400 text-[9px] font-bold uppercase tracking-wider">Lengkapi data untuk masuk ke antrian Loting</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="label-sekre">Kategori Usia *</label>
+                    <select id="reg-cat" class="input-loting">
+                        <option>PRA USIA DINI</option>
+                        <option>USIA DINI</option>
+                        <option>PRA REMAJA</option>
+                        <option>REMAJA</option>
+                        <option>DEWASA</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-sekre">Kelas (Abjad) *</label>
+                        <select id="reg-kelas" class="input-loting uppercase">
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option><option value="BEBAS">BEBAS</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-sekre">Jenis Kelamin *</label>
+                        <select id="reg-gender" class="input-loting">
+                            <option>PUTRA</option>
+                            <option>PUTRI</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="label-sekre">Nama Lengkap Peserta *</label>
+                    <input type="text" id="reg-nama" class="input-loting uppercase" placeholder="NAMA LENGKAP">
+                </div>
+
+                <div>
+                    <label class="label-sekre">Nama Perguruan / Kontingen *</label>
+                    <input type="text" id="reg-kont" class="input-loting uppercase" placeholder="INSTANSI / KONTINGEN">
+                </div>
+
+                <div class="hidden">
+                    <input type="hidden" id="reg-round" value="3">
+                    <input type="hidden" id="reg-timer" value="120">
+                </div>
+
+                <div>
+                    <label class="label-sekre">Upload Foto (Opsional)</label>
+                    <input type="file" id="reg-photo" class="input-loting" accept=".jpg,.jpeg,.png">
+                </div>
+
+                <div class="pt-4 space-y-3">
+                    <button onclick="handleRegistrationSubmit()" class="w-full bg-rose-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg active:scale-95 transition-all">Daftarkan Peserta Sekarang</button>
+                    <button onclick="changeScreen('login')" class="w-full text-slate-400 font-bold text-[9px] uppercase tracking-widest py-2">Kembali ke Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN MENU WITH SLIDER -->
+    <div id="screen-landing" class="screen p-8 justify-center items-center text-center">
+        <div class="mb-10 relative">
+            <h1 class="text-3xl font-black uppercase leading-tight text-white">
+                <span style="color: #CD7F32;">2 CAHAYA</span><br>Digital Scoring
+            </h1>
+            <div class="h-1.5 w-16 bg-emerald-500 mx-auto mt-4 rounded-full"></div>
+            <button onclick="toggleLandscape()" class="absolute top-0 right-0 text-white/30 hover:text-white transition-all"><i class="fas fa-laptop"></i></button>
+        </div>
+
+        <div class="w-full max-sm md:max-w-xl mx-auto overflow-visible relative">
+            <button onclick="moveMenu('prev')" class="slider-nav-btn left">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button onclick="moveMenu('next')" class="slider-nav-btn right">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+
+            <div class="menu-slider-container" id="menu-slider" onscroll="updateDots()">
+                <div class="menu-slide grid grid-cols-2 gap-4">
+                    <button onclick="requestMenuAccess('dewan')" class="bg-white/90 backdrop-blur-sm p-6 rounded-[2rem] shadow-sm border-b-4 border-emerald-500 font-black text-[10px] uppercase italic transition-all active:scale-95 relative">
+                        <i class="fas fa-lock absolute top-4 right-4 text-green-500"></i>
+                        <img src="https://iili.io/CrYi1N1.png" class="w-18 h-18 mx-auto mb-2 object-contain">Dewan
+                    </button>
+                    <button onclick="requestMenuAccess('juri-select')" class="bg-white/90 backdrop-blur-sm p-6 rounded-[2rem] shadow-sm border-b-4 border-blue-500 font-black text-[10px] uppercase italic transition-all active:scale-95 relative">
+                        <i class="fas fa-lock absolute top-4 right-4 text-green-500"></i>
+                        <img src="https://iili.io/CrYD7Kg.png" class="w-18 h-18 mx-auto mb-2 object-contain">Juri
+                    </button>
+                    <button onclick="requestMenuAccess('sekretaris')" class="bg-white/90 backdrop-blur-sm p-6 rounded-[2rem] shadow-sm border-b-4 border-purple-500 font-black text-[10px] uppercase italic transition-all active:scale-95 relative">
+                        <i class="fas fa-lock absolute top-4 right-4 text-green-500"></i>
+                        <img src="https://iili.io/CraFPR9.png" class="w-18 h-18 mx-auto mb-2 object-contain">Sekretaris
+                    </button>
+                    <button onclick="requestMenuAccess('operator')" class="bg-white/90 backdrop-blur-sm p-6 rounded-[2rem] shadow-sm border-b-4 border-indigo-500 font-black text-[10px] uppercase italic transition-all active:scale-95 relative">
+                        <i class="fas fa-lock absolute top-4 right-4 text-green-500"></i>
+                        <img src="https://iili.io/Cram0sS.png" class="w-18 h-18 mx-auto mb-2 object-contain">Operator
+                    </button>
+                </div>
+
+                <div class="menu-slide grid grid-cols-2 gap-4">
+                    <button onclick="changeScreen('jadwal')" class="bg-white/90 backdrop-blur-sm p-6 rounded-[2rem] shadow-sm border-b-4 border-orange-500 font-black text-[10px] uppercase italic transition-all active:scale-95"><img src="https://iili.io/CrMeM1j.png" class="w-18 h-18 mx-auto mb-2 object-contain">Jadwal</button>
+                    <button onclick="changeScreen('monitor')" class="bg-white/90 backdrop-blur-sm p-6 rounded-[2rem] shadow-sm border-b-4 border-yellow-500 font-black text-[10px] uppercase italic transition-all active:scale-95"><img src="https://iili.io/Cray7ol.png" class="w-18 h-18 mx-auto mb-2 object-contain">Monitor</button>
+                    <button onclick="requestMenuAccess('loting')" class="bg-white/90 backdrop-blur-sm p-6 rounded-[2rem] shadow-sm border-b-4 border-rose-500 font-black text-[10px] uppercase italic transition-all active:scale-95 relative">
+                        <i class="fas fa-lock absolute top-4 right-4 text-green-500"></i>
+                        <img src="https://iili.io/CrMefJp.png" class="w-18 h-18 mx-auto mb-2 object-contain">Loting
+                    </button>
+                    <button onclick="changeScreen('laporan')" class="bg-white/90 backdrop-blur-sm p-6 rounded-[2rem] shadow-sm border-b-4 border-teal-500 font-black text-[10px] uppercase italic transition-all active:scale-95"><img src="https://iili.io/Crc5tGp.png" class="w-18 h-18 mx-auto mb-2 object-contain">Laporan</button>
+                </div>
+
+                <div class="menu-slide grid grid-cols-2 gap-4">
+                    <button onclick="changeScreen('bracket-new')" class="bg-white/90 backdrop-blur-sm p-6 rounded-[2rem] shadow-sm border-b-4 border-amber-500 font-black text-[10px] uppercase italic transition-all active:scale-95"><img src="https://iili.io/Crc7Cc7.png" class="w-18 h-18 mx-auto mb-2 object-contain">Bracket</button>
+                    
+                    <!-- MENU BARU: VAR KAMERA -->
+                    <button onclick="requestMenuAccess('var-kamera')" class="bg-white/90 backdrop-blur-sm p-6 rounded-[2rem] shadow-sm border-b-4 border-red-600 font-black text-[10px] uppercase italic transition-all active:scale-95 relative">
+                        <i class="fas fa-lock absolute top-4 right-4 text-green-500"></i>
+                        <i class="fas fa-video text-[3.5rem] text-red-500 mb-3 drop-shadow-md"></i><br>VAR Kamera
+                    </button>
+
+                    <div class="invisible"></div>
+                    <div class="invisible"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-center items-center gap-2 mt-6">
+                <div id="dot-0" class="dot-indicator active"></div>
+                <div id="dot-1" class="dot-indicator"></div>
+                <div id="dot-2" class="dot-indicator"></div>
+            </div>
+        </div>
+
+        <button onclick="location.reload()" class="mt-10 text-white/50 font-black uppercase text-[9px] border border-white/20 px-6 py-2.5 rounded-full active:bg-white active:text-black transition-all">Logout / Keluar</button>
+    </div>
+
+    <!-- MODAL PASSWORD MENU -->
+    <div id="modal-password" class="modal-overlay">
+        <div class="bg-white rounded-[2.5rem] p-8 w-full max-sm text-center shadow-2xl relative">
+            <div class="mb-6">
+                <i class="fas fa-lock text-5xl text-green-500 mb-4"></i>
+                <h2 class="text-slate-800 font-black text-lg uppercase italic mb-1">Keamanan Menu</h2>
+                <p class="text-slate-400 font-bold text-[10px] uppercase tracking-wider">Silahkan Masukkan Password</p>
+            </div>
+            
+            <div class="mb-6">
+                <input type="password" id="menu-pass-input" maxlength="6" class="w-full bg-slate-100 border border-slate-200 rounded-2xl py-4 px-6 text-slate-800 text-center font-black placeholder-slate-300 outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all uppercase tracking-[0.5em]" placeholder="••••••">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closeModal('modal-password')" class="bg-slate-200 text-slate-600 font-black py-3 rounded-xl text-[10px] uppercase tracking-widest active:scale-95 transition-all">Batal</button>
+                <button onclick="validateMenuPassword()" class="bg-slate-900 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest active:scale-95 transition-all">Masuk</button>
+            </div>
+
+            <p id="menu-pass-error" class="text-red-500 font-black text-[9px] mt-4 uppercase hidden italic">Password Salah</p>
+        </div>
+    </div>
+
+    <!-- HALAMAN KHUSUS: LIVE VIDEO VAR SCREEN (MOBILE FRIENDLY) -->
+    <div id="screen-var-kamera" class="screen bg-slate-900">
+        <!-- Header -->
+        <div class="p-4 bg-slate-950 shadow-sm flex justify-between items-center border-b border-slate-800">
+            <button onclick="closeVarKamera()" class="text-slate-400 hover:text-white p-2 transition-colors"><i class="fas fa-arrow-left text-xl"></i></button>
+            <h2 class="text-sm font-black uppercase tracking-widest italic text-red-500 flex items-center shadow-red-500/20"><i class="fas fa-video mr-2"></i>Live Video VAR</h2>
+            <div class="w-8"></div>
+        </div>
+        
+        <!-- Video Container -->
+        <div class="flex-1 relative w-full h-full overflow-hidden flex items-center justify-center bg-black">
+            <video id="var-dedicated-video" class="w-full h-full object-cover" autoplay muted playsinline></video>
+            
+            <!-- Live Recording Badge -->
+            <div class="absolute top-4 left-4 flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-lg border border-red-500/50 backdrop-blur-sm">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-full w-full bg-red-500"></span>
+                </span>
+                <span class="text-white text-[10px] font-black uppercase tracking-widest">LIVE REC</span>
+            </div>
+
+            <!-- Frame Target (Visual aid for operator) -->
+            <div class="absolute inset-8 border-2 border-white/20 rounded-3xl pointer-events-none flex items-center justify-center">
+                <i class="fas fa-crosshairs text-white/20 text-6xl"></i>
+            </div>
+        </div>
+
+        <!-- Bottom Controls (Sangat Mobile Friendly) -->
+        <div class="bg-slate-950 p-4 border-t border-slate-800 pb-8 sm:pb-12 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] z-10">
+            <p class="text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-3">Panel Verifikasi Juri & Monitor</p>
+            
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <button onclick="startVAR('JATUHAN')" class="bg-blue-600 hover:bg-blue-700 text-white py-4 md:py-6 rounded-2xl font-black text-xs md:text-sm uppercase shadow-[0_4px_15px_rgba(37,99,235,0.4)] active:scale-95 transition-all flex flex-col items-center gap-1.5 border border-blue-500">
+                    <i class="fas fa-user-injured text-2xl md:text-3xl"></i> Verifikasi Jatuhan
+                </button>
+                <button onclick="startVAR('PELANGGARAN')" class="bg-amber-500 hover:bg-amber-600 text-white py-4 md:py-6 rounded-2xl font-black text-xs md:text-sm uppercase shadow-[0_4px_15px_rgba(245,158,11,0.4)] active:scale-95 transition-all flex flex-col items-center gap-1.5 border border-amber-400">
+                    <i class="fas fa-exclamation-triangle text-2xl md:text-3xl"></i> Verifikasi Pelanggaran
+                </button>
+            </div>
+            
+            <button onclick="pushVideoToMonitor()" class="w-full bg-red-600 hover:bg-red-700 text-white py-4 md:py-5 rounded-2xl font-black text-xs md:text-sm uppercase shadow-[0_4px_15px_rgba(220,38,38,0.4)] active:scale-95 flex justify-center items-center gap-2 transition-all border border-red-500">
+                <i class="fas fa-tv text-xl"></i> Tampilkan Replay 30 Detik ke Monitor
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL TIE BREAK RESULT -->
+    <div id="modal-tie-result" class="modal-overlay">
+        <div class="bg-white rounded-[2rem] p-6 w-full max-sm text-center shadow-2xl overflow-hidden">
+            <h2 class="font-black text-lg uppercase italic text-slate-800 mb-4">Analisis Skor Seri</h2>
+            <div class="overflow-x-auto mb-6">
+                <table class="tie-table">
+                    <thead>
+                        <tr>
+                            <th>Pesilat</th>
+                            <th>Total Pinalty</th>
+                            <th>Freq Teknis</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tie-table-body"></tbody>
+                </table>
+            </div>
+            <div id="tie-winner-box" class="hidden rounded-2xl p-4 mb-4 text-white">
+                <p class="text-[10px] font-bold uppercase opacity-80 mb-1">Pemenang Otomatis (Tie Break):</p>
+                <h3 id="tie-win-name" class="font-black text-sm uppercase leading-tight">NAMA PESERTA</h3>
+                <p id="tie-win-kont" class="text-[10px] font-bold uppercase italic">KONTINGEN</p>
+            </div>
+            <div id="tie-same-notif" class="hidden mb-4 p-3 bg-amber-100 text-amber-800 rounded-xl font-black text-[9px] uppercase italic">
+                <i class="fas fa-exclamation-triangle mr-2"></i> Parameter Sama. Keputusan dikembalikan ke Dewan.
+            </div>
+            <button onclick="closeModal('modal-tie-result')" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Tutup Notifikasi</button>
+        </div>
+    </div>
+
+    <!-- MODALS DISKUALIFIKASI, UD, WMP -->
+    <div id="modal-diskualifikasi" class="modal-overlay">
+        <div class="bg-white rounded-[2.5rem] p-8 w-full max-sm text-center shadow-2xl">
+            <p class="font-black text-sm uppercase mb-8">Peserta yang didiskualifikasi adalah:</p>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="executeDis('biru')" class="sudut-biru-bg py-8 rounded-3xl font-black uppercase text-xs">SUDUT BIRU</button>
+                <button onclick="executeDis('merah')" class="sudut-merah-bg py-8 rounded-3xl font-black uppercase text-xs">SUDUT MERAH</button>
+            </div>
+            <button onclick="closeModal('modal-diskualifikasi')" class="mt-8 text-[10px] font-black text-slate-400">Batal</button>
+        </div>
+    </div>
+
+    <div id="modal-ud" class="modal-overlay">
+        <div class="bg-white rounded-[2.5rem] p-8 w-full max-sm text-center shadow-2xl">
+            <p class="font-black text-sm uppercase mb-8">Peserta yang Undur Diri adalah:</p>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="executeUD('biru')" class="sudut-biru-bg py-8 rounded-3xl font-black uppercase text-xs">SUDUT BIRU</button>
+                <button onclick="executeUD('merah')" class="sudut-merah-bg py-8 rounded-3xl font-black uppercase text-xs">SUDUT MERAH</button>
+            </div>
+            <button onclick="closeModal('modal-ud')" class="mt-8 text-[10px] font-black text-slate-400">Batal</button>
+        </div>
+    </div>
+
+    <div id="modal-wmp" class="modal-overlay">
+        <div class="bg-white rounded-[2.5rem] p-8 w-full max-sm text-center shadow-2xl">
+            <p class="font-black text-sm uppercase mb-8">Wasit Memutuskan Kemenangan Untuk:</p>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="executeWMP('biru')" class="sudut-biru-bg py-8 rounded-3xl font-black uppercase text-[10px]">MENANG BIRU (MERAH LOSE WMP)</button>
+                <button onclick="executeWMP('merah')" class="sudut-merah-bg py-8 rounded-3xl font-black uppercase text-[10px]">MENANG MERAH (BIRU LOSE WMP)</button>
+            </div>
+            <button onclick="closeModal('modal-wmp')" class="mt-8 text-[10px] font-black text-slate-400">Batal</button>
+        </div>
+    </div>
+
+    <!-- MODAL VAR RESULT DEWAN PENGAMAT -->
+    <div id="modal-dw-var-result" class="modal-overlay">
+        <div class="bg-white rounded-[3rem] p-10 w-full max-w-md text-center shadow-2xl border-4 border-yellow-500">
+            <h2 class="text-slate-800 font-black text-2xl uppercase italic mb-4">Hasil Verifikasi VAR</h2>
+            <div id="dw-var-info-full" class="text-slate-400 text-[10px] font-bold uppercase mb-6 border-b border-slate-100 pb-4">---</div>
+            <div id="dw-var-auto-box" class="w-full py-6 rounded-2xl mb-8 font-black text-xl uppercase tracking-widest text-white shadow-xl transition-all bg-slate-100">MENUNGGU JURI...</div>
+            <div class="flex justify-around items-center mb-12">
+                <div class="flex flex-col items-center gap-3"><div id="dw-vote-1" class="circle-vote bg-slate-100 text-xl">1</div><span class="text-slate-400 font-bold text-[9px]">JURI 1</span></div>
+                <div class="flex flex-col items-center gap-3"><div id="dw-vote-2" class="circle-vote bg-slate-100 text-xl">2</div><span class="text-slate-400 font-bold text-[9px]">JURI 2</span></div>
+                <div class="flex flex-col items-center gap-3"><div id="dw-vote-3" class="circle-vote bg-slate-100 text-xl">3</div><span class="text-slate-400 font-bold text-[9px]">JURI 3</span></div>
+            </div>
+            <button onclick="closeVAR()" class="w-full bg-slate-800 text-white py-6 rounded-3xl font-black uppercase text-sm shadow-lg active:scale-95 transition-all">S E L E S A I</button>
+        </div>
+    </div>
+
+    <div id="modal-var-type" class="modal-overlay">
+        <div class="bg-white rounded-[2.5rem] p-8 w-full max-sm text-center shadow-2xl">
+            <h3 class="font-black text-blue-600 italic text-xl mb-2">V A R</h3>
+            <p class="font-bold text-slate-400 text-[10px] mb-8">PILIH JENIS VERIFIKASI:</p>
+            <div class="grid grid-cols-1 gap-4">
+                <button onclick="startVAR('JATUHAN')" class="bg-slate-800 text-white py-6 rounded-2xl font-black uppercase text-xs">JATUHAN</button>
+                <button onclick="startVAR('PELANGGARAN')" class="bg-slate-800 text-white py-6 rounded-2xl font-black uppercase text-xs">PELANGGARAN</button>
+            </div>
+            <button onclick="closeModal('modal-var-type')" class="mt-6 text-[10px] font-black text-slate-400">Batal</button>
+        </div>
+    </div>
+
+    <!-- SCREEN BRACKET FULL SCREEN -->
+    <div id="screen-bracket-new" class="screen bg-slate-50 overflow-hidden">
+        <div class="p-4 bg-white shadow-sm flex flex-col md:flex-row md:justify-between md:items-center border-b gap-3">
+            <div class="flex items-center gap-4">
+                <button onclick="changeScreen('landing')" class="text-gray-400"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="text-xs font-black uppercase italic text-amber-600">Tournament Bracket</h2>
+                <button onclick="toggleLandscape()" class="text-slate-400 hover:text-slate-600 ml-2"><i class="fas fa-laptop"></i></button>
+            </div>
+            <div class="flex flex-wrap gap-2 items-center">
+                <select id="br-f-cat" onchange="generateNewBracket()" class="text-[8px] font-bold border rounded-lg px-2 py-1 uppercase bg-slate-50 border-slate-200">
+                    <option value="SEMUA">Semua Usia</option>
+                    <option>PRA USIA DINI</option><option>USIA DINI</option><option>PRA REMAJA</option><option>REMAJA</option><option>DEWASA</option>
+                </select>
+                <select id="br-f-kelas" onchange="generateNewBracket()" class="text-[8px] font-bold border rounded-lg px-2 py-1 uppercase bg-slate-50 border-slate-200">
+                    <option value="SEMUA">Semua Kelas</option>
+                </select>
+                <select id="br-f-gender" onchange="generateNewBracket()" class="text-[8px] font-bold border rounded-lg px-2 py-1 uppercase bg-slate-50 border-slate-200">
+                    <option value="SEMUA">Gender</option><option>PUTRA</option><option>PUTRI</option>
+                </select>
+                <button onclick="exportBracketPDF()" class="bg-amber-600 text-white font-bold text-[8px] px-3 py-1 rounded shadow-sm hover:bg-amber-700 transition-all"><i class="fas fa-file-pdf mr-1"></i> EXPORT PDF</button>
+            </div>
+        </div>
+        <div class="bracket-full-screen" id="bracket-area-pdf">
+            <div id="bracket-render-new" class="bracket-wrapper-new"></div>
+        </div>
+    </div>
+
+    <!-- DEWAN (REVISI: REFRESH JURI & OPEN VAR PAGE) -->
+    <div id="screen-dewan" class="screen p-2">
+        <div class="bg-white p-2 rounded-xl shadow-sm mb-1 border border-slate-100">
+            <div class="grid grid-cols-3 items-center mb-1 w-full overflow-hidden h-12">
+                <div class="flex items-center w-24">
+                    <button onclick="changeScreen('landing')" class="bg-orange-500 px-3 py-2 rounded-lg text-white shadow-md text-xs"><i class="fas fa-home"></i></button>
+                    <button onclick="toggleLandscape()" class="ml-2 bg-slate-100 px-3 py-2 rounded-lg text-slate-500 shadow-sm text-xs"><i class="fas fa-laptop"></i></button>
+                    <!-- TOMBOL REFRESH JURI -->
+                    <button onclick="refreshJuries()" class="ml-2 bg-rose-100 px-3 py-2 rounded-lg text-rose-600 shadow-sm text-xs" title="Refresh/Reset Juri"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div class="flex items-center justify-center gap-2 flex-1">
+                    <div class="flex items-center"><span class="text-[7px] font-black uppercase text-slate-400">J1</span><div id="lamp-j1" class="juri-lamp juri-lamp-red"></div></div>
+                    <div class="flex items-center"><span class="text-[7px] font-black uppercase text-slate-400">J2</span><div id="lamp-j2" class="juri-lamp juri-lamp-red"></div></div>
+                    <div class="flex items-center"><span class="text-[7px] font-black uppercase text-slate-400">J3</span><div id="lamp-j3" class="juri-lamp juri-lamp-red"></div></div>
+                </div>
+                <div class="w-24 text-right flex flex-col justify-center">
+                    <h1 id="dw-timer-disp" class="text-2xl font-black text-slate-800 leading-none font-mono">02:00</h1>
+                    <p id="dw-babak-disp" class="text-[8px] font-black text-red-600 uppercase tracking-tighter">BABAK 1</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-4 gap-1 mb-1"><button onclick="finishMatch()" class="btn-raise bg-amber-500 border-amber-700 text-white font-black text-[8px] py-1.5 rounded-md">FINISH</button><button onclick="nextMatch()" class="btn-raise bg-purple-600 border-purple-800 text-white font-black text-[8px] py-1.5 rounded-md">NEXT</button><button onclick="openModal('modal-ud')" class="btn-raise bg-gray-600 border-gray-800 text-white font-black text-[8px] py-1.5 rounded-md">U D</button><button onclick="openModal('modal-wmp')" class="btn-raise bg-pink-600 border-pink-800 text-white font-black text-[8px] py-1.5 rounded-md">W M P</button></div>
+            <div class="grid grid-cols-2 gap-1 mb-1"><button onclick="openModal('modal-diskualifikasi')" class="btn-raise bg-slate-900 text-white font-black text-[8px] py-2 rounded-md uppercase">Diskualifikasi</button><button onclick="openVarKamera()" class="btn-raise bg-blue-900 text-white font-black text-[8px] py-2 rounded-md uppercase italic relative overflow-hidden"><span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full m-1 animate-pulse shadow-[0_0_5px_red]"></span>VIDEO V A R</button></div>
+            <button onclick="toggleStatsTable()" class="w-full bg-slate-100 text-slate-500 font-bold text-[8px] py-1 rounded uppercase border border-slate-200"><i class="fas fa-chart-bar mr-1"></i> <span id="stats-toggle-text">Tampilkan Statistik Poin</span></button>
+        </div>
+        <div id="dw-stats-container" class="stats-table-container"><table class="stats-table"><thead><tr><th>Pesilat</th><th>Jatuhan</th><th>Binaan</th><th>Teguran</th><th>Peringatan</th></tr></thead><tbody><tr class="text-blue-600"><td class="font-black">BIRU</td><td id="stat-b-jatuhan">0</td><td id="stat-b-binaan">0</td><td id="stat-b-teguran">0</td><td id="stat-b-peringatan">0</td></tr><tr class="text-red-600"><td class="font-black">MERAH</td><td id="stat-m-jatuhan">0</td><td id="stat-m-binaan">0</td><td id="stat-m-teguran">0</td><td id="stat-m-peringatan">0</td></tr></tbody></table></div>
+        <div id="dw-header-live" class="status-header bg-blue-900 text-white mb-1 text-center"><div id="dw-live-detail" class="text-[9px] font-black leading-tight uppercase">---</div></div>
+        <div id="dw-header-prep" class="status-header bg-emerald-50 text-slate-700 text-center"><div class="text-[6px] text-emerald-600 font-black uppercase italic">Partai Persiapan:</div><div id="dw-prep-detail" class="text-[8px] font-bold leading-tight uppercase">---</div></div>
+        <div id="dw-scoring-area" class="grid grid-cols-2 gap-2 mb-2"></div>
+        <div id="dw-controls-area" class="grid grid-cols-2 gap-3 flex-1 overflow-y-auto custom-scroll pb-2">
+            <div class="grid grid-cols-2 gap-1.5 h-fit"><button onclick="applyPenalty('biru','binaan1')" id="b-binaan1" class="btn-compact btn-raise"><i class="fas fa-hand-point-left text-blue-600"></i>Binaan 1</button><button onclick="applyPenalty('biru','binaan2')" id="b-binaan2" class="btn-compact btn-raise"><i class="fas fa-hand-peace rotate-90 text-blue-600"></i>Binaan 2</button><button onclick="applyPenalty('biru','teguran1')" id="b-teguran1" class="btn-compact btn-raise"><i class="fas fa-hand-point-up text-blue-600"></i>Teguran 1</button><button onclick="applyPenalty('biru','teguran2')" id="b-teguran2" class="btn-compact btn-raise"><i class="fas fa-hand-peace text-blue-600"></i>Teguran 2</button><button onclick="applyPenalty('biru','peringatan1')" id="b-peringatan1" class="btn-compact btn-raise">1<br>Peringatan 1</button><button onclick="applyPenalty('biru','peringatan2')" id="b-peringatan2" class="btn-compact btn-raise">2<br>Peringatan 2</button><button onclick="addJatuhan('biru')" class="btn-raise sudut-biru-bg text-[9px] font-black py-2 rounded-lg col-span-2">JATUHAN +3</button><button onclick="anulirJatuhan('biru')" class="btn-raise bg-white text-slate-500 text-[7px] font-black py-1.5 rounded-lg col-span-2 uppercase">Anulir Jatuhan -3</button></div>
+            <div class="grid grid-cols-2 gap-1.5 h-fit"><button onclick="applyPenalty('merah','binaan1')" id="m-binaan1" class="btn-compact btn-raise"><i class="fas fa-hand-point-right text-red-600"></i>Binaan 1</button><button onclick="applyPenalty('merah','binaan2')" id="m-binaan2" class="btn-compact btn-raise"><i class="fas fa-hand-peace rotate-90 text-red-600"></i>Binaan 2</button><button onclick="applyPenalty('merah','teguran1')" id="m-teguran1" class="btn-compact btn-raise"><i class="fas fa-hand-point-up text-red-600"></i>Teguran 1</button><button onclick="applyPenalty('merah','teguran2')" id="m-teguran2" class="btn-compact btn-raise"><i class="fas fa-hand-peace text-red-600"></i>Teguran 2</button><button onclick="applyPenalty('merah','peringatan1')" id="m-peringatan1" class="btn-compact btn-raise">1<br>Peringatan 1</button><button onclick="applyPenalty('merah','peringatan2')" id="m-peringatan2" class="btn-compact btn-raise">2<br>Peringatan 2</button><button onclick="addJatuhan('merah')" class="btn-raise sudut-merah-bg text-[9px] font-black py-2 rounded-lg col-span-2">JATUHAN +3</button><button onclick="anulirJatuhan('merah')" class="btn-raise bg-white text-slate-500 text-[7px] font-black py-1.5 rounded-lg col-span-2 uppercase">Anulir Jatuhan -3</button></div>
+        </div>
+    </div>
+
+    <!-- SEKRETARIS, OPERATOR, JADWAL -->
+    <div id="screen-sekretaris" class="screen"><div class="p-4 bg-white shadow-sm flex justify-between items-center border-b"><div class="flex items-center"><button onclick="changeScreen('landing')" class="text-slate-400 p-2"><i class="fas fa-arrow-left"></i></button><button onclick="toggleLandscape()" class="text-slate-400 p-2 ml-1"><i class="fas fa-laptop"></i></button></div><h2 class="text-xs font-black uppercase italic text-purple-600">Sekretaris</h2><button onclick="saveSekreData()" class="bg-emerald-500 text-white px-3 py-2 rounded-lg font-black text-[9px]">SIMPAN DATA</button></div><div class="flex-1 overflow-y-auto p-4 bg-slate-50 custom-scroll"><div id="sekre-form-container" class="space-y-6 pb-40"></div></div><div class="fixed bottom-0 left-0 right-0 bg-white p-4 border-t flex justify-between items-center z-[40000] shadow-2xl"><button onclick="changeSekrePage(-1)" class="bg-slate-800 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase">Prev</button><div class="text-center"><span id="sekre-page-info" class="text-[11px] font-black text-slate-700 block italic">Halaman 1 / 100</span><span class="text-[7px] text-slate-400 font-bold uppercase mt-1">Gunakan tombol simpan sebelum pindah</span></div><button onclick="changeSekrePage(1)" class="bg-slate-800 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase">Next</button></div></div>
+    
+    <!-- PERBAIKAN SCREEN OPERATOR (TIMER DROP DOWN & REMOTE MATCHLIST/SCORE) -->
+    <div id="screen-operator" class="screen bg-slate-50">
+        <div class="p-4 bg-white shadow-sm flex justify-between items-center">
+            <div class="flex items-center">
+                <button onclick="changeScreen('landing')" class="text-slate-400 text-sm p-1"><i class="fas fa-arrow-left"></i></button>
+                <button onclick="toggleLandscape()" class="text-slate-400 p-1 ml-2"><i class="fas fa-laptop"></i></button>
+            </div>
+            <h2 class="text-xs font-black uppercase italic text-indigo-600">Operator Panel</h2>
+            <button onclick="clearAllMatches()" class="bg-red-600 text-white px-3 py-1.5 rounded-lg font-black text-[9px] uppercase italic active:scale-95 transition-all"><i class="fas fa-trash-alt mr-1"></i> Hapus Semua</button>
+        </div>
+        <div class="p-3 bg-white border-b shadow-sm">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-black uppercase text-indigo-600 italic">Control Station</span>
+                    <!-- DROP DOWN TIMER -->
+                    <select onchange="setMatchTimer(this.value)" class="mt-1 bg-slate-100 border border-slate-200 text-[8px] font-black rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">SET WAKTU</option>
+                        <option value="60">1 Menit</option>
+                        <option value="90">1.5 Menit</option>
+                        <option value="120">2 Menit</option>
+                        <option value="180">3 Menit</option>
+                    </select>
+                </div>
+                <span id="op-timer-disp" class="text-3xl font-black text-slate-800 font-mono tracking-tighter">02:00</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mb-3">
+                <button onclick="timerCtrl('start')" class="bg-emerald-500 text-white font-black py-3 rounded-xl text-[9px] uppercase active:scale-95 transition-all shadow-md">GO</button>
+                <button onclick="timerCtrl('stop')" class="bg-amber-500 text-white font-black py-3 rounded-xl text-[9px] uppercase active:scale-95 transition-all shadow-md">PAUSE</button>
+                <button onclick="timerCtrl('reset')" class="bg-red-500 text-white font-black py-3 rounded-xl text-[9px] uppercase active:scale-95 transition-all shadow-md">RESET</button>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mb-3">
+                <button onclick="setRound(1)" id="op-btn-b1" class="border-2 border-slate-200 py-2 rounded-xl text-[9px] font-black uppercase active:scale-95 transition-all">Round I</button>
+                <button onclick="setRound(2)" id="op-btn-b2" class="border-2 border-slate-200 py-2 rounded-xl text-[9px] font-black uppercase active:scale-95 transition-all">Round II</button>
+                <button onclick="setRound(3)" id="op-btn-b3" class="border-2 border-slate-200 py-2 rounded-xl text-[9px] font-black uppercase active:scale-95 transition-all">Round III</button>
+            </div>
+            <!-- REMOTE KONTROL MONITOR -->
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="remoteSwitchMonView('score')" class="bg-slate-800 text-white font-black py-2.5 rounded-xl text-[8px] uppercase active:scale-95 transition-all flex items-center justify-center gap-2"><i class="fas fa-tv"></i> Tampilkan Monitor</button>
+                <button onclick="remoteSwitchMonView('list')" class="bg-slate-800 text-white font-black py-2.5 rounded-xl text-[8px] uppercase active:scale-95 transition-all flex items-center justify-center gap-2"><i class="fas fa-list-ul"></i> Tampilkan Matchlist</button>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-2 custom-scroll">
+            <table class="w-full text-[7px] border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+                <thead class="bg-indigo-600 text-white">
+                    <tr><th class="p-2">No</th><th class="p-2">Partai / Keterangan</th><th class="p-2">Nama Peserta / Kontingen</th><th class="p-2">Status</th><th class="p-2">Aksi</th></tr>
+                </thead>
+                <tbody id="operator-table-body" class="text-center font-bold uppercase"></tbody>
+            </table>
+        </div>
+        <div class="bg-white p-3 border-t flex justify-between items-center z-[40000]">
+            <button onclick="changeOperatorPage(-1)" class="bg-indigo-600 text-white px-6 py-2 rounded-xl text-[10px] font-black active:scale-95">PREV</button>
+            <span id="op-page-info" class="text-[11px] font-black text-slate-600 italic">Hal 1 / 100</span>
+            <button onclick="changeOperatorPage(1)" class="bg-indigo-600 text-white px-6 py-2 rounded-xl text-[10px] font-black active:scale-95">NEXT</button>
+        </div>
+    </div>
+    
+    <!-- SCREEN JADWAL - OPTIMIZED PORTRAIT -->
+    <div id="screen-jadwal" class="screen bg-slate-50">
+        <div class="p-4 bg-white shadow-sm flex justify-between items-center">
+            <div class="flex items-center">
+                <button onclick="changeScreen('landing')" class="text-gray-400"><i class="fas fa-arrow-left"></i></button>
+                <button onclick="toggleLandscape()" class="text-slate-400 ml-2"><i class="fas fa-laptop"></i></button>
+            </div>
+            <h2 class="text-xs font-black uppercase italic text-orange-600">Jadwal Pertandingan</h2>
+            <button onclick="exportFullPDF()" class="bg-orange-600 text-white font-bold text-[8px] px-3 py-1 rounded">EXPORT PDF</button>
+        </div>
+        <div id="pdf-jadwal-container" class="flex-1 overflow-x-hidden overflow-y-auto p-2 custom-scroll">
+            <table class="w-full text-[7px] border-collapse bg-white shadow-sm rounded-lg overflow-hidden table-fixed">
+                <thead class="bg-slate-800 text-white uppercase">
+                    <tr>
+                        <th class="border p-1" style="width: 5%;">No</th>
+                        <th class="border p-1" style="width: 18%;">Partai / Fase</th>
+                        <th class="border p-1 bg-blue-600" style="width: 26%;">Biru</th>
+                        <th class="border p-1 bg-slate-100 text-slate-800" style="width: 17%;">Kelas / Usia</th>
+                        <th class="border p-1 bg-red-600" style="width: 26%;">Merah</th>
+                        <th class="border p-1 bg-slate-700" style="width: 8%;">SC</th>
+                    </tr>
+                </thead>
+                <tbody id="jadwal-table-body" class="text-center font-bold uppercase"></tbody>
+            </table>
+        </div>
+        <div class="bg-white p-3 border-t flex justify-between items-center z-[40000]">
+            <button onclick="changeJadwalPage(-1)" class="bg-orange-500 text-white px-4 py-2 rounded-lg text-[9px] font-black">PREV</button>
+            <span id="jadwal-page-info" class="text-[9px] font-bold">Hal 1 / 100</span>
+            <button onclick="changeJadwalPage(1)" class="bg-orange-500 text-white px-4 py-2 rounded-lg text-[9px] font-black">NEXT</button>
+        </div>
+    </div>
+
+    <!-- SCREEN LOTING -->
+    <div id="screen-loting" class="screen bg-slate-50">
+        <div class="p-4 bg-white shadow-sm flex justify-between items-center border-b">
+            <div class="flex items-center">
+                <button onclick="changeScreen('landing')" class="text-gray-400 p-2"><i class="fas fa-arrow-left"></i></button>
+                <button onclick="toggleLandscape()" class="text-slate-400 p-2 ml-1"><i class="fas fa-laptop"></i></button>
+            </div>
+            <h2 class="text-xs font-black uppercase italic text-rose-600">Manajemen Loting</h2>
+            <button onclick="clearAllParticipants()" class="bg-rose-100 text-rose-700 font-black text-[8px] px-4 py-2 rounded-xl active:scale-90 transition-all uppercase"><i class="fas fa-trash-alt mr-1"></i> RESET SEMUA</button>
+        </div>
+
+        <div class="flex bg-white border-b">
+            <button id="lot-tab-1" onclick="switchLotingPage(1)" class="loting-tab-btn active"><i class="fas fa-user-plus mr-2"></i> 1. Input Data</button>
+            <button id="lot-tab-2" onclick="switchLotingPage(2)" class="loting-tab-btn"><i class="fas fa-users mr-2"></i> 2. Data & Loting</button>
+        </div>
+        
+        <div id="lot-page-1" class="flex-1 overflow-y-auto p-6 bg-white flex flex-col items-center">
+            <div class="w-full max-w-lg space-y-6">
+                <!-- Fitur Impor Excel -->
+                <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                    <h3 class="text-[10px] font-black uppercase text-slate-500 mb-4 flex items-center gap-2"><i class="fas fa-file-excel text-green-600"></i> Impor Data via Excel</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        <p class="text-[8px] text-slate-400 font-bold uppercase tracking-tight italic">* Pastikan kolom berisi: Nama, Kontingen, Kelas, Kategori</p>
+                        <input type="file" id="lot-excel-input" class="hidden" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
+                        <button onclick="document.getElementById('lot-excel-input').click()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-md active:scale-95 transition-all"><i class="fas fa-upload mr-2"></i> Pilih File Excel</button>
+                    </div>
+                </div>
+
+                <div class="text-center py-2">
+                    <div class="h-px bg-slate-200 w-full relative"><span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-4 text-[7px] font-black text-slate-300">ATAU INPUT MANUAL</span></div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                    <!-- HIDDEN FIELD UNTUK EDIT ID -->
+                    <input type="hidden" id="lot-edit-id" value="">
+                    
+                    <div><label class="label-sekre uppercase">Kategori Usia</label><select id="lot-cat" class="input-loting uppercase"><option>PRA USIA DINI</option><option>USIA DINI</option><option>PRA REMAJA</option><option>REMAJA</option><option>DEWASA</option></select></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="label-sekre uppercase">Kelas</label>
+                            <select id="lot-kelas" class="input-loting uppercase">
+                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option><option value="BEBAS">BEBAS</option>
+                            </select>
+                        </div>
+                        <div><label class="label-sekre uppercase">Jenis Kelamin</label><select id="lot-gender" class="input-loting uppercase"><option>PUTRA</option><option>PUTRI</option></select></div>
+                    </div>
+                    <div><label class="label-sekre uppercase">Nama Lengkap Peserta</label><input type="text" id="lot-nama" class="input-loting uppercase" placeholder="NAMA PESILAT"></div>
+                    <div><label class="label-sekre uppercase">Nama Perguruan / Kontingen</label><input type="text" id="lot-nama-perguruan" class="input-loting uppercase" placeholder="INSTANSI/KONTINGEN"></div>
+                    <div><label class="label-sekre uppercase">Upload Foto (JPG/PNG/PDF)</label><input type="file" id="lot-photo" class="input-loting" accept=".jpg,.jpeg,.png,.pdf"></div>
+                    
+                    <button id="lot-save-btn" onclick="addParticipantToLoting()" class="w-full bg-rose-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg active:scale-[0.98] transition-all mt-4"><i class="fas fa-save mr-2"></i> Daftarkan Peserta</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="lot-page-2" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50">
+            <div class="bg-white p-4 border-b shadow-sm">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-[9px] font-black uppercase text-slate-500 italic"><i class="fas fa-filter mr-2"></i> Filter & Manajemen Data</span>
+                    <span id="loting-counter-badge" class="bg-rose-100 text-rose-600 px-3 py-1 rounded-full font-black text-[9px]">TOTAL: 0</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <select id="lot-f-cat" onchange="applyLotingFilters()" class="text-[8px] font-bold border rounded-xl px-2 py-3 outline-none uppercase bg-slate-50 border-slate-200">
+                        <option value="SEMUA">Semua Usia</option>
+                        <option>PRA USIA DINI</option><option>USIA DINI</option><option>PRA REMAJA</option><option>REMAJA</option><option>DEWASA</option>
+                    </select>
+                    <select id="lot-f-kelas" onchange="applyLotingFilters()" class="text-[8px] font-bold border rounded-xl px-2 py-3 outline-none uppercase bg-slate-50 border-slate-200">
+                        <option value="SEMUA">Semua Kelas</option>
+                    </select>
+                    <select id="lot-f-gender" onchange="applyLotingFilters()" class="text-[8px] font-bold border rounded-xl px-2 py-3 outline-none uppercase bg-slate-50 border-slate-200">
+                        <option value="SEMUA">Gender</option><option>PUTRA</option><option>PUTRI</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="executeLoting()" class="bg-slate-900 text-white py-2.5 rounded-xl font-black text-[8px] uppercase shadow-md active:scale-95 italic"><i class="fas fa-random mr-1"></i> Proses Loting</button>
+                    <button onclick="exportParticipantsExcel()" class="bg-green-600 text-white py-2.5 rounded-xl font-black text-[8px] uppercase shadow-md active:scale-95"><i class="fas fa-file-excel mr-1"></i> Export Excel</button>
+                    <button onclick="exportParticipantsPDF()" class="bg-red-600 text-white py-2.5 rounded-xl font-black text-[8px] uppercase shadow-md active:scale-95"><i class="fas fa-file-pdf mr-1"></i> Export PDF</button>
+                </div>
+            </div>
+
+            <div id="lot-table-pdf-target" class="flex-1 overflow-auto custom-scroll p-4">
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+                    <table id="loting-data-table" class="w-full text-[8px] border-collapse">
+                        <thead class="bg-slate-800 text-white uppercase sticky top-0">
+                            <tr>
+                                <th class="p-3 text-left">No</th>
+                                <th class="p-3 text-left">Peserta (Nama & Kontingen)</th>
+                                <th class="p-3">Kelas</th>
+                                <th class="p-3">Usia</th>
+                                <th class="p-3">Gender</th>
+                                <th class="p-3">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="loting-table-body" class="font-bold uppercase text-slate-600"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- PAGINATION CONTROL LOTING -->
+            <div class="bg-white p-3 border-t flex justify-between items-center z-[40000]">
+                <button onclick="changeLotingPage(-1)" class="bg-slate-200 text-slate-600 px-6 py-2 rounded-xl text-[9px] font-black uppercase active:scale-95 transition-all">Prev</button>
+                <div class="text-center"><span id="loting-page-info" class="text-[10px] font-black text-slate-700 italic">Hal 1 / 1</span></div>
+                <button onclick="changeLotingPage(1)" class="bg-slate-200 text-slate-600 px-6 py-2 rounded-xl text-[9px] font-black uppercase active:scale-95 transition-all">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN LAPORAN PERTANDINGAN -->
+    <div id="screen-laporan" class="screen bg-slate-50">
+        <div class="p-4 bg-white shadow-sm flex justify-between items-center">
+            <div class="flex items-center">
+                <button onclick="changeScreen('landing')" class="text-gray-400"><i class="fas fa-arrow-left"></i></button>
+                <button onclick="toggleLandscape()" class="text-slate-400 ml-2"><i class="fas fa-laptop"></i></button>
+            </div>
+            <h2 class="text-xs font-black uppercase italic text-teal-600">Laporan Pertandingan</h2>
+            <button onclick="exportLaporanPDF()" class="bg-teal-600 text-white font-bold text-[8px] px-3 py-1 rounded">CETAK LAPORAN</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 custom-scroll">
+            <div id="report-content" class="report-page shadow-xl">
+                <div class="report-header">
+                    <p class="report-title">LAPORAN HASIL PERTANDINGAN</p>
+                    <p class="report-subtitle">KEJUARAAN PENCAK SILAT DIGITAL SCORING 2026</p>
+                </div>
+                
+                <div class="report-info-grid">
+                    <div>
+                        <p>Partai : <span id="rep-p-val">---</span></p>
+                        <p>Kategori : <span id="rep-k-val">---</span></p>
+                        <p>Golongan : <span id="rep-g-val">---</span></p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p>Fase : <span id="rep-f-val">---</span></p>
+                        <p>Waktu Cetak : <span id="rep-w-val">---</span></p>
+                    </div>
+                </div>
+
+                <span class="report-section-header">I. Ringkasan Hasil Akhir</span>
+                <table class="report-table">
+                    <thead style="background: #f1f5f9;">
+                        <tr><th>SUDUT</th><th>NAMA ATLET</th><th>KONTINGEN / PERGURUAN</th><th>SKOR</th></tr>
+                    </thead>
+                    <tbody id="report-summary-body"></tbody>
+                </table>
+
+                <span class="report-section-header">II. Statistik Frekuensi Poin & Sanksi</span>
+                <table class="report-table">
+                    <thead style="background: #f1f5f9;">
+                        <tr><th>PARAMETER TEKNIS</th><th style="color: #1e40af;">SUDUT BIRU</th><th style="color: #991b1b;">SUDUT MERAH</th></tr>
+                    </thead>
+                    <tbody id="report-stats-body"></tbody>
+                </table>
+
+                <span class="report-section-header">III. Detail Penilaian Per Juri</span>
+                <div id="report-juri-logs" class="space-y-4"></div>
+
+                <span class="report-section-header">IV. Log Sanksi & Pelanggaran Pertandingan</span>
+                <div id="report-penalty-logs"></div>
+
+                <div style="margin-top: 50px; display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; text-align: center;">
+                    <div style="width: 180px; border-top: 1px solid black; padding-top: 5px;">
+                        SEKRETARIS PERTANDINGAN
+                        <div style="height: 40px;"></div>
+                        (....................................)
+                    </div>
+                    <div style="width: 180px; border-top: 1px solid black; padding-top: 5px;">
+                        KETUA PERTANDINGAN
+                        <div style="height: 40px;"></div>
+                        (....................................)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MONITOR -->
+    <div id="screen-monitor" class="screen p-2 bg-white overflow-y-auto custom-scroll relative">
+        <div class="flex justify-between items-center px-2 py-1 mb-2">
+            <div class="flex items-center gap-2">
+                <button onclick="changeScreen('landing')" class="text-slate-400 p-1"><i class="fas fa-chevron-left"></i></button>
+                <button onclick="toggleLandscape()" class="mon-header-small-btn" title="Layar Penuh"><i class="fas fa-expand"></i></button>
+                <button onclick="toggleMonitorLaptopMode()" class="mon-header-small-btn" title="Mode Laptop"><i class="fas fa-laptop"></i></button>
+            </div>
+        </div>
+
+        <div id="mon-view-score-container" class="flex-1 flex flex-col relative">
+            <div id="mon-scoring-area" class="grid grid-cols-[auto_1fr_auto_1fr_auto] gap-2 items-stretch flex-1">
+                <!-- JS RENDERED MONITOR VIEW -->
+            </div>
+        </div>
+
+        <div id="mon-view-list-container" class="hidden flex-1 flex flex-col">
+            <div class="mon-match-list-area flex-1 flex flex-col">
+                <div class="mb-4 flex justify-between items-center">
+                    <span class="text-slate-800 font-black uppercase italic text-xs">Jadwal Pertandingan Live</span>
+                    <div class="flex gap-2">
+                        <button onclick="changeMonMatchPage(-1)" class="bg-slate-200 hover:bg-slate-300 p-2 rounded-lg text-slate-600 text-[10px] font-bold"><i class="fas fa-chevron-left"></i></button>
+                        <span id="mon-match-page-info" class="text-slate-600 font-bold text-[10px] self-center">Hal 1</span>
+                        <button onclick="changeMonMatchPage(1)" class="bg-slate-200 hover:bg-slate-300 p-2 rounded-lg text-slate-600 text-[10px] font-bold"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="mon-table-header">
+                                <th class="p-3 rounded-tl-xl" style="width: 5%;">No</th>
+                                <th class="p-3" style="width: 35%;">Info Partai Lengkap</th>
+                                <th class="p-3" style="width: 25%;">Sudut Biru</th>
+                                <th class="p-3" style="width: 25%;">Sudut Merah</th>
+                                <th class="p-3 rounded-tr-xl" style="width: 10%;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mon-match-list-body" class="text-slate-700 uppercase font-bold text-[9px]"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- OVERLAY VIDEO VAR PADA MONITOR -->
+        <div id="mon-video-var-overlay" class="absolute inset-0 bg-black/95 z-[90000] hidden flex-col items-center justify-center p-4 sm:p-8 backdrop-blur-md">
+            <h2 class="text-red-500 font-black text-xl sm:text-4xl uppercase tracking-widest mb-6 animate-pulse flex items-center"><i class="fas fa-video mr-3"></i> VAR REPLAY - 30 DETIK</h2>
+            <div class="w-full max-w-5xl aspect-video bg-slate-900 rounded-3xl overflow-hidden border-4 border-red-500 relative shadow-[0_0_50px_rgba(239,68,68,0.4)]">
+                <video id="mon-var-video-player" class="w-full h-full object-cover" autoplay muted playsinline></video>
+                <div class="absolute top-4 right-4 bg-red-600 text-white font-black px-4 py-2 rounded-lg uppercase shadow-lg text-xl">
+                    REPLAY
+                </div>
+                <div class="absolute top-4 left-4 bg-black/50 text-white font-bold text-[10px] px-3 py-1.5 rounded uppercase tracking-widest backdrop-blur-sm border border-white/20">
+                    <i class="fas fa-eye mr-1"></i> Dewan Pengawas
+                </div>
+                <!-- Progress bar for 30s -->
+                <div class="absolute bottom-0 left-0 h-2 sm:h-4 bg-red-600 var-progress-bar" id="mon-var-progress"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JURI SELECTION -->
+    <div id="screen-juri-select" class="screen p-8 justify-center items-center">
+        <div id="juri-alert-box" class="fixed top-10 left-0 right-0 z-[60000] flex justify-center pointer-events-none opacity-0 transition-opacity"><div class="bg-red-600 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl juri-alert-ani flex items-center gap-3"><i class="fas fa-exclamation-triangle"></i> JURI SUDAH MASUK</div></div>
+        <div class="mb-8 text-center"><h2 class="text-2xl font-black uppercase text-blue-600 italic">Panel Penilaian Juri</h2></div>
+        <div class="grid grid-cols-1 gap-4 w-full max-w-xs">
+            <button onclick="initJuri(1)" class="p-6 bg-white border-2 border-blue-500 rounded-3xl font-black text-blue-600 shadow-lg text-lg uppercase italic flex items-center justify-center gap-4">Juri 1 <div id="select-lamp-j1" class="juri-lamp juri-lamp-red"></div></button>
+            <button onclick="initJuri(2)" class="p-6 bg-white border-2 border-blue-500 rounded-3xl font-black text-blue-600 shadow-lg text-lg uppercase italic flex items-center justify-center gap-4">Juri 2 <div id="select-lamp-j2" class="juri-lamp juri-lamp-red"></div></button>
+            <button onclick="initJuri(3)" class="p-6 bg-white border-2 border-blue-500 rounded-3xl font-black text-blue-600 shadow-lg text-lg uppercase italic flex items-center justify-center gap-4">Juri 3 <div id="select-lamp-j3" class="juri-lamp juri-lamp-red"></div></button>
+        </div>
+        <button onclick="changeScreen('landing')" class="mt-8 text-slate-400 font-bold uppercase text-[10px] tracking-widest"><i class="fas fa-arrow-left mr-2"></i> KEMBALI KE MENU UTAMA</button>
+    </div>
+
+    <!-- JURI PANEL -->
+    <div id="screen-juri" class="screen bg-slate-900">
+        <div id="jr-var-overlay" class="modal-overlay">
+            <div class="bg-white rounded-[3rem] p-8 w-full max-md shadow-2xl border-4 border-blue-500 text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 right-0 h-2 bg-blue-500"></div>
+                <h3 class="font-black text-blue-600 italic text-xl mb-1">V A R</h3>
+                <p id="jr-var-header" class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">---</p>
+                <div class="flex justify-between items-center mb-8 px-2 gap-2"><div class="flex-1"><p id="jr-var-b-name" class="text-blue-600 font-black text-[12px] uppercase leading-tight mb-1 truncate">---</p><p id="jr-var-b-kont" class="text-blue-400 font-bold text-[8px] uppercase italic truncate">---</p></div><div class="font-black text-slate-300 italic text-xs">VS</div><div class="flex-1"><p id="jr-var-m-name" class="text-red-600 font-black text-[12px] uppercase leading-tight mb-1 truncate">---</p><p id="jr-var-m-kont" class="text-red-400 font-bold text-[8px] uppercase italic truncate">---</p></div></div>
+                <div id="jr-vote-container" class="grid grid-cols-3 gap-4 w-full"><button id="jr-vote-biru" onclick="sendVarVote('biru')" class="circle-vote bg-blue-600 active:scale-95 shadow-lg border-4 border-blue-100"><i class="fas fa-check text-xl mb-1"></i>BIRU</button><button id="jr-vote-merah" onclick="sendVarVote('merah')" class="circle-vote bg-red-600 active:scale-95 shadow-lg border-4 border-red-100"><i class="fas fa-check text-xl mb-1"></i>MERAH</button><button id="jr-vote-kuning" onclick="sendVarVote('kuning')" class="circle-vote bg-yellow-500 active:scale-95 shadow-lg border-4 border-yellow-100"><i class="fas fa-times text-xl mb-1"></i>INVALID</button></div>
+                <p class="mt-8 text-[7px] font-black text-slate-300 uppercase italic">*Pilihan akan terkunci setelah diklik</p>
+            </div>
+        </div>
+        <div class="p-3 flex justify-between items-center border-b border-white/10 bg-slate-800">
+            <button onclick="exitJuri()" class="text-[9px] font-black text-white bg-red-600 px-4 py-2 rounded-lg shadow-md uppercase italic">EXIT</button>
+            <div class="text-center flex-1 mx-2 flex items-center justify-center gap-2"><button onclick="toggleLandscape()" class="btn-rotate-mini"><i class="fas fa-expand"></i></button><div class="flex flex-col"><span id="jr-role-name" class="text-[14px] font-black text-blue-400 block uppercase italic tracking-wider">JURI ---</span><span id="jr-partai-info" class="text-[8px] font-bold text-gray-300 uppercase italic">---</span></div></div>
+            <div class="flex flex-col items-end"><span id="jr-timer-disp" class="text-2xl font-black text-yellow-400 font-mono leading-none">02:00</span><span id="jr-round-badge" class="text-[8px] bg-red-600 text-white px-2 rounded mt-1 font-black">BABAK 1</span></div>
+        </div>
+        <div class="flex-1 flex flex-row p-2 gap-2 overflow-hidden">
+            <div class="flex-1 sudut-biru-bg rounded-[2rem] p-4 flex flex-col border-b-8 border-blue-800 shadow-2xl relative transition-all"><div class="flex flex-col items-center mb-4"><p id="jr-b-nama-full" class="text-[11px] font-black uppercase truncate w-full text-center">---</p><p id="jr-b-kont-full" class="text-[8px] font-bold opacity-80 uppercase truncate w-full text-center">---</p></div><div class="flex-1 flex flex-col gap-3"><button id="jr-btn-hit-b1" onclick="sendHitDirect('biru', 1)" class="jr-hit-btn flex-1 bg-white/30 rounded-3xl flex flex-col items-center justify-center shadow-lg active:bg-white active:text-blue-600 transition-all uppercase"><i class="fas fa-hand-fist text-4xl mb-1"></i><span class="text-[11px] font-black tracking-tighter">PUKULAN +1</span></button><button id="jr-btn-hit-b2" onclick="sendHitDirect('biru', 2)" class="jr-hit-btn flex-1 bg-white/30 rounded-3xl flex flex-col items-center justify-center shadow-lg active:bg-white active:text-blue-600 transition-all uppercase"><i class="fas fa-shoe-prints -rotate-90 text-4xl mb-1"></i><span class="text-[11px] font-black tracking-tighter">TENDANGAN +2</span></button></div></div>
+            <div class="flex-1 sudut-merah-bg rounded-[2rem] p-4 flex flex-col border-b-8 border-red-800 shadow-2xl relative transition-all"><div class="flex flex-col items-center mb-4"><p id="jr-m-nama-full" class="text-[11px] font-black uppercase truncate w-full text-center">---</p><p id="jr-m-kont-full" class="text-[8px] font-bold opacity-80 uppercase truncate w-full text-center">---</p></div><div class="flex-1 flex flex-col gap-3"><button id="jr-btn-hit-m1" onclick="sendHitDirect('merah', 1)" class="jr-hit-btn flex-1 bg-white/30 rounded-3xl flex flex-col items-center justify-center shadow-lg active:bg-white active:text-red-600 transition-all uppercase"><i class="fas fa-hand-fist text-4xl mb-1"></i><span class="text-[11px] font-black tracking-tighter">PUKULAN +1</span></button><button id="jr-btn-hit-m2" onclick="sendHitDirect('merah', 2)" class="jr-hit-btn flex-1 bg-white/30 rounded-3xl flex flex-col items-center justify-center shadow-lg active:bg-white active:text-red-600 transition-all uppercase"><i class="fas fa-shoe-prints -rotate-90 text-4xl mb-1"></i><span class="text-[11px] font-black tracking-tighter">TENDANGAN +2</span></button></div></div>
+        </div>
+    </div>
+
+    <audio id="snd-hit" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBTPCFsJz1cY9L44H38RS4Ag8YusBNKXRA",
+        authDomain: "lukman-nur.firebaseapp.com",
+        databaseURL: "https://lukman-nur-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "lukman-nur",
+        storageBucket: "lukman-nur.firebasestorage.app",
+        messagingSenderId: "966190722319",
+        appId: "1:966190722319:web:98e20a170b5cf4da73a27a"
+    };
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const dbRef = ref(database, 'pencak_scoring_state');
+
+    const INITIAL_STATE = {
+        timer: 120, babak: 1, isRunning: false, idx: 0, bertandingIdx: -1, persiapanIdx: -1,
+        monViewMode: 'score', 
+        participants: [], 
+        matches: Array.from({length: 1000}, (_, i) => ({ 
+            p: i+1, m: "", b: "", km: "", kb: "", cat: "USIA DINI", kelas: "A", gender: "PUTRA", fase: "PENYISIHAN", status: 'idle', totalM: 0, totalB: 0, winner: "", winnerSide: "",
+            biruStatus: "", merahStatus: "", maxBabak: 3, maxTimer: 120, nextP: null, photoB: "", photoM: ""
+        })),
+        merah: { juri: {j1:[0,0,0], j2:[0,0,0], j3:[0,0,0]}, penHistory: [], jat: 0, jatHistory: [], pukulanFreq: 0, tendanganFreq: 0, dis: false, ud: false, wmp: false },
+        biru: { juri: {j1:[0,0,0], j2:[0,0,0], j3:[0,0,0]}, penHistory: [], jat: 0, jatHistory: [], pukulanFreq: 0, tendanganFreq: 0, dis: false, ud: false, wmp: false },
+        buffer: { merah: { v1: {j1:0, j2:0, j3:0}, v2: {j1:0, j2:0, j3:0} }, biru: { v1: {j1:0, j2:0, j3:0}, v2: {j1:0, j2:0, j3:0} } },
+        juriStatus: { j1: false, j2: false, j3: false },
+        var: { active: false, type: '', votes: { j1: '', j2: '', j3: '' } },
+        videoVar: { active: false, showOnMonitor: false, timestamp: 0 },
+        lastHit: { sudut: '', time: 0, multiple: [], type: 0 },
+        menuAccess: {
+            'dewan': '',
+            'sekretaris': '',
+            'operator': '',
+            'juri-select': '',
+            'loting': '',
+            'var-kamera': ''
+        }
+    };
+
+    window.state = INITIAL_STATE;
+    window.localJuri = localStorage.getItem('pencak_role_juri') || 0;
+    let tInt = null;
+    window.sekrePage = 0; window.jadwalPage = 0; window.operatorPage = 0;
+    window.monMatchPage = 0;
+    window.lotingCurrentPage = 0;
+    window.pendingScreenId = '';
+
+    window.lotingFilterCat = 'SEMUA'; 
+    window.lotingFilterKelas = 'SEMUA'; 
+    window.lotingFilterGender = 'SEMUA';
+
+    let localVideoStream = null;
+
+    onValue(dbRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) { 
+            window.state = data; 
+            updateUI(); 
+            if(document.getElementById('screen-operator').classList.contains('active')) renderOperatorTable();
+            if(document.getElementById('screen-jadwal').classList.contains('active')) renderJadwalTable();
+            if(document.getElementById('screen-bracket-new').classList.contains('active')) generateNewBracket();
+            if(document.getElementById('screen-monitor').classList.contains('active')) renderMonMatchList();
+            if(document.getElementById('screen-loting').classList.contains('active')) renderLotingTable();
+            
+            if(document.getElementById('screen-monitor').classList.contains('active')) {
+                switchMonView(window.state.monViewMode || 'score');
+            }
+
+            if(window.localJuri && !window.state.juriStatus['j' + window.localJuri]) {
+                if(document.getElementById('screen-juri').classList.contains('active')) {
+                    exitJuri();
+                }
+            }
+        }
+        else { set(dbRef, INITIAL_STATE); }
+    });
+
+    // FUNGSI LIVE VIDEO VAR (DEDICATED SCREEN)
+    window.openVarKamera = function() {
+        changeScreen('var-kamera');
+    };
+
+    window.closeVarKamera = function() {
+        changeScreen('landing');
+    };
+
+    window.pushVideoToMonitor = function() {
+        if (!confirm("Tampilkan Video ke Layar Monitor Replay selama 30 Detik?")) return;
+        
+        window.broadcast('videoVar', { active: true, showOnMonitor: true, timestamp: Date.now() });
+        alert("Video Replay 30 Detik sedang ditampilkan di Monitor!");
+        
+        // Timeout otomatis mematikan display monitor setelah 30 detik
+        setTimeout(() => {
+            if (window.state.videoVar && window.state.videoVar.showOnMonitor) {
+                window.broadcast('videoVar/showOnMonitor', false);
+            }
+        }, 30000);
+    };
+
+    window.remoteSwitchMonView = function(mode) {
+        window.broadcast('monViewMode', mode);
+        showNotif();
+    }
+
+    window.setMatchTimer = function(seconds) {
+        if(!seconds) return;
+        const s = parseInt(seconds);
+        window.broadcast('timer', s);
+        if(window.state.bertandingIdx >= 0) {
+            window.broadcast(`matches/${window.state.bertandingIdx}/maxTimer`, s);
+        }
+        showNotif();
+    }
+
+    window.refreshJuries = function() {
+        if(confirm("Keluarkan semua juri ke menu opsi pemilihan juri?")) {
+            window.broadcast('juriStatus', { j1: false, j2: false, j3: false });
+            showNotif();
+        }
+    }
+
+    window.handleRegistrationSubmit = function() {
+        const cat = document.getElementById('reg-cat').value;
+        const kelas = document.getElementById('reg-kelas').value.toUpperCase();
+        const gender = document.getElementById('reg-gender').value;
+        const nama = document.getElementById('reg-nama').value.toUpperCase();
+        const kont = document.getElementById('reg-kont').value.toUpperCase();
+        const rCount = 3; 
+        const timer = 120; 
+        const photoInput = document.getElementById('reg-photo');
+
+        if(!nama || !kelas || !kont) {
+            alert("Harap lengkapi semua kolom bertanda *");
+            return;
+        }
+
+        const saveRegistration = (photoUrl = "") => {
+            const current = window.state.participants || [];
+            current.push({ 
+                id: Date.now(), cat, kelas, gender, nama, kont, photo: photoUrl, round: rCount, timer: timer 
+            });
+            window.broadcast('participants', current);
+            document.getElementById('reg-nama').value = "";
+            document.getElementById('reg-kont').value = "";
+            document.getElementById('reg-photo').value = "";
+            showNotif();
+            setTimeout(() => { changeScreen('login'); }, 1500);
+        }
+
+        if(photoInput.files && photoInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => saveRegistration(e.target.result);
+            reader.readAsDataURL(photoInput.files[0]);
+        } else { saveRegistration(""); }
+    }
+
+    window.handleLogin = function() {
+        const passInput = document.getElementById('login-pass');
+        const errorMsg = document.getElementById('login-error');
+        if(passInput.value === '123123') {
+            document.getElementById('screen-login').classList.remove('active');
+            document.getElementById('screen-landing').classList.add('active');
+            errorMsg.classList.add('hidden');
+        } else { errorMsg.classList.remove('hidden'); passInput.value = ''; }
+    }
+
+    window.requestMenuAccess = function(screenId) {
+        window.pendingScreenId = screenId;
+        document.getElementById('menu-pass-input').value = '';
+        document.getElementById('menu-pass-error').classList.add('hidden');
+        openModal('modal-password');
+    }
+
+    window.validateMenuPassword = function() {
+        const input = document.getElementById('menu-pass-input').value;
+        const targetScreen = window.pendingScreenId;
+        const correctPass = INITIAL_STATE.menuAccess[targetScreen];
+        if(input === correctPass) {
+            closeModal('modal-password');
+            changeScreen(targetScreen);
+        } else {
+            document.getElementById('menu-pass-error').classList.remove('hidden');
+            document.getElementById('menu-pass-input').value = '';
+        }
+    }
+
+    window.broadcast = function(path = "", value = null) {
+        if (path !== "") { const specificRef = ref(database, 'pencak_scoring_state/' + path); set(specificRef, value); }
+        else { set(dbRef, window.state); }
+    }
+
+    window.changeScreen = function(id) { 
+        if (document.fullscreenElement) { document.exitFullscreen().catch(e => console.log(e)); }
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+        document.getElementById('screen-'+id).classList.add('active'); 
+        const landBtn = document.getElementById('floating-landscape-btn');
+        landBtn.style.display = (id === 'operator' || id === 'dewan') ? 'flex' : 'none';
+        
+        // Handle Video VAR Local Stream
+        if(id === 'var-kamera') {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(stream => {
+                    localVideoStream = stream;
+                    document.getElementById('var-dedicated-video').srcObject = stream;
+                })
+                .catch(err => {
+                    console.log('Akses kamera VAR gagal:', err);
+                    alert("Gagal mengakses kamera perangkat untuk Video VAR.");
+                });
+            }
+        } else {
+            if (localVideoStream) {
+                localVideoStream.getTracks().forEach(track => track.stop());
+                localVideoStream = null;
+                const vEl = document.getElementById('var-dedicated-video');
+                if(vEl) vEl.srcObject = null;
+            }
+        }
+
+        if(id === 'sekretaris') renderSekreForm();
+        if(id === 'operator') renderOperatorTable();
+        if(id === 'jadwal') renderJadwalTable();
+        if(id === 'loting') { switchLotingPage(1); renderLotingTable(); }
+        if(id === 'laporan') renderLaporan();
+        if(id === 'bracket-new') generateNewBracket();
+        if(id === 'monitor') { switchMonView(window.state.monViewMode || 'score'); renderMonMatchList(); }
+    }
+
+    window.switchMonView = function(mode) {
+        const scoreContainer = document.getElementById('mon-view-score-container');
+        const listContainer = document.getElementById('mon-view-list-container');
+        if(mode === 'score') {
+            scoreContainer.classList.remove('hidden');
+            listContainer.classList.add('hidden');
+        } else {
+            scoreContainer.classList.add('hidden');
+            listContainer.classList.remove('hidden');
+            renderMonMatchList();
+        }
+    }
+
+    window.renderMonMatchList = function() {
+        const body = document.getElementById('mon-match-list-body');
+        if(!body) return;
+        const list = window.state.matches.filter(m => m.m || m.b);
+        const start = window.monMatchPage * 10;
+        const pageItems = list.slice(start, start + 10);
+        const bIdx = window.state.bertandingIdx;
+        body.innerHTML = pageItems.map((m, i) => {
+            const realIdx = m.p - 1;
+            const isBertanding = (realIdx === bIdx);
+            const isPersiapan = (realIdx > bIdx && realIdx <= bIdx + 3);
+            const isSelesai = m.status === 'selesai';
+            let statusLabel = '';
+            if(isBertanding) { statusLabel = '<span class="text-emerald-500">LIVE</span>'; }
+            else if(isPersiapan) { statusLabel = '<span class="text-amber-500">SIAP</span>'; }
+            else if(isSelesai) { statusLabel = `<span class="bg-slate-800 px-3 py-1 rounded-lg text-white font-black">${m.totalB}-${m.totalM}</span>`; }
+            const bGray = (isSelesai && m.winnerSide === 'merah') ? 'slot-gray' : '';
+            const mGray = (isSelesai && m.winnerSide === 'biru') ? 'slot-gray' : '';
+            const avB = m.photoB ? `<img src="${m.photoB}" class="avatar-mon-table">` : `<div class="avatar-mon-table bg-slate-100 flex items-center justify-center"><i class="fas fa-user text-[10px] text-slate-300"></i></div>`;
+            const avM = m.photoM ? `<img src="${m.photoM}" class="avatar-mon-table">` : `<div class="avatar-mon-table bg-slate-100 flex items-center justify-center"><i class="fas fa-user text-[10px] text-slate-300"></i></div>`;
+            return `<tr class="mon-match-row"><td class="p-3 border-r border-slate-100">${m.p}</td><td class="p-3 border-r border-slate-100 leading-tight"><div class="text-emerald-600 text-[8px] font-black uppercase">Partai ${m.p}</div><div class="text-[9px] text-slate-800">${m.fase} ${m.kelas} ${m.cat} ${m.gender}</div></td><td class="p-3 mon-cell-blue border-r border-slate-100 ${bGray}"><div class="flex items-center gap-2">${avB}<div class="overflow-hidden"><div class="${bGray ? 'text-slate-400' : 'text-slate-800'} truncate text-[9px]">${m.b}</div><div class="text-[7px] ${bGray ? 'text-slate-500' : 'text-slate-400'} truncate">${m.kb}</div></div></div></td><td class="p-3 mon-cell-red border-r border-slate-100 ${mGray}"><div class="flex items-center gap-2">${avM}<div class="overflow-hidden"><div class="${mGray ? 'text-slate-400' : 'text-slate-800'} truncate text-[9px]">${m.m}</div><div class="text-[7px] ${mGray ? 'text-slate-500' : 'text-slate-400'} truncate">${m.km}</div></div></div></td><td class="p-3 text-center"><div class="flex items-center justify-center">${statusLabel}</div></td></tr>`;
+        }).join('');
+        document.getElementById('mon-match-page-info').innerText = `Hal ${window.monMatchPage + 1}`;
+    }
+
+    window.changeMonMatchPage = function(v) {
+        const total = window.state.matches.filter(m => m.m || m.b).length;
+        const max = Math.max(0, Math.ceil(total/10)-1);
+        let n = window.monMatchPage + v;
+        if(n >= 0 && n <= max) { window.monMatchPage = n; renderMonMatchList(); }
+    }
+
+    window.switchLotingPage = function(pageNum) {
+        document.getElementById('lot-page-1').classList.toggle('hidden', pageNum !== 1);
+        document.getElementById('lot-page-2').classList.toggle('hidden', pageNum !== 2);
+        document.getElementById('lot-tab-1').classList.toggle('active', pageNum === 1);
+        document.getElementById('lot-tab-2').classList.toggle('active', pageNum === 2);
+        if(pageNum === 2) renderLotingTable();
+    }
+
+    window.updateDots = function() {
+        const slider = document.getElementById('menu-slider');
+        const slideIndex = Math.round(slider.scrollLeft / slider.offsetWidth);
+        for(let i=0; i<3; i++) {
+            const dot = document.getElementById('dot-' + i);
+            if(dot) dot.classList.toggle('active', i === slideIndex);
+        }
+    }
+
+    window.moveMenu = function(dir) {
+        const slider = document.getElementById('menu-slider');
+        const width = slider.offsetWidth;
+        if(dir === 'next') slider.scrollLeft += width;
+        else slider.scrollLeft -= width;
+    }
+
+    window.generateNewBracket = function() {
+        const fCat = document.getElementById('br-f-cat').value;
+        const fKelas = document.getElementById('br-f-kelas').value;
+        const fGender = document.getElementById('br-f-gender').value;
+        const categoryMatches = (window.state.matches || []).filter(m => (fCat === 'SEMUA' || m.cat === fCat) && (fKelas === 'SEMUA' || m.kelas === fKelas) && (fGender === 'SEMUA' || m.gender === fGender) && (m.m || m.b));
+        const container = document.getElementById('bracket-render-new');
+        container.innerHTML = '';
+        if (categoryMatches.length === 0) { container.innerHTML = '<div class="text-slate-400 font-bold uppercase italic text-center w-full py-20">Data pertandingan tidak ditemukan</div>'; return; }
+        const fases = ["PENYISIHAN", "PEREMPAT FINAL", "SEMI FINAL", "FINAL"];
+        const renderData = fases.filter(f => categoryMatches.some(m => m.fase === f));
+        renderData.forEach((fase, rIndex) => {
+            const roundMatches = categoryMatches.filter(m => m.fase === fase);
+            const roundDiv = document.createElement('div');
+            roundDiv.className = 'round-column-new';
+            roundDiv.innerHTML = `<div class="round-header-new"><div class="round-title-new">${fase}</div></div>`;
+            roundMatches.forEach((m, mIndex) => {
+                const isSelesai = m.status === 'selesai';
+                const isBye = m.m === "BYE";
+                const bGugur = (isSelesai && m.winnerSide === 'merah') ? 'slot-gray' : '';
+                const rGugur = (isSelesai && m.winnerSide === 'biru') ? 'slot-gray' : '';
+                const matchHtml = `<div class="matchup-new"><div class="pty-tag-new">Partai ${m.p}</div><div class="player-slot-new blue-new ${bGugur}"><span>${m.b || '---'}</span><small>${m.kb || '---'}</small></div><div class="player-slot-new red-new ${rGugur} ${isBye ? 'slot-gray' : ''}"><span>${m.m || '---'}</span><small>${m.km || '---'}</small></div>${renderConnectorNew(rIndex, mIndex, renderData.length, roundMatches.length)}</div>`;
+                roundDiv.innerHTML += matchHtml;
+            });
+            container.appendChild(roundDiv);
+        });
+    }
+
+    function renderConnectorNew(roundIndex, matchIndex, totalRounds, matchesInRound) {
+        if (roundIndex === totalRounds - 1) return ''; 
+        let vLineHeight = [85, 185, 385, 785, 1585]; 
+        let h = vLineHeight[roundIndex] || 2000;
+        const isEven = matchIndex % 2 === 0;
+        const style = isEven ? `height: ${h}px; top: 50%; border-bottom: none; border-radius: 0 10px 0 0;` : `height: ${h}px; bottom: 50%; border-top: none; border-radius: 0 0 10px 0;`;
+        return `<div class="connector-new" style="${style}"></div>`;
+    }
+
+    window.addParticipantToLoting = function() {
+        const editId = document.getElementById('lot-edit-id').value;
+        const cat = document.getElementById('lot-cat').value;
+        const kelas = document.getElementById('lot-kelas').value.toUpperCase();
+        const gender = document.getElementById('lot-gender').value;
+        const nama = document.getElementById('lot-nama').value.toUpperCase();
+        const kont = document.getElementById('lot-nama-perguruan').value.toUpperCase();
+        const rCount = 3; 
+        const timer = 120;
+        const photoInput = document.getElementById('lot-photo');
+        
+        if(!nama || !kelas || !kont) { alert("Data tidak lengkap!"); return; }
+
+        const processSave = (photoUrl = "") => {
+            let current = window.state.participants || [];
+            if(editId) {
+                const idx = current.findIndex(p => p.id == editId);
+                if(idx > -1) {
+                    const oldPhoto = current[idx].photo;
+                    current[idx] = { ...current[idx], cat, kelas, gender, nama, kont, photo: photoUrl || oldPhoto };
+                }
+            } else {
+                current.push({ id: Date.now(), cat, kelas, gender, nama, kont, photo: photoUrl, round: rCount, timer: timer });
+            }
+            window.broadcast('participants', current);
+            
+            // RESET FORM
+            document.getElementById('lot-edit-id').value = "";
+            document.getElementById('lot-nama').value = "";
+            document.getElementById('lot-nama-perguruan').value = "";
+            document.getElementById('lot-photo').value = "";
+            document.getElementById('lot-save-btn').innerHTML = `<i class="fas fa-save mr-2"></i> Daftarkan Peserta`;
+            
+            showNotif();
+        }
+
+        if(photoInput.files && photoInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => processSave(e.target.result);
+            reader.readAsDataURL(photoInput.files[0]);
+        } else { processSave(""); }
+    }
+
+    window.editParticipantLoting = function(id) {
+        const p = window.state.participants.find(x => x.id == id);
+        if(p) {
+            document.getElementById('lot-edit-id').value = p.id;
+            document.getElementById('lot-cat').value = p.cat;
+            document.getElementById('lot-kelas').value = p.kelas;
+            document.getElementById('lot-gender').value = p.gender;
+            document.getElementById('lot-nama').value = p.nama;
+            document.getElementById('lot-nama-perguruan').value = p.kont;
+            document.getElementById('lot-save-btn').innerHTML = `<i class="fas fa-edit mr-2"></i> Update Peserta`;
+            switchLotingPage(1);
+        }
+    }
+
+    window.exportParticipantsExcel = function() {
+        const list = window.state.participants || [];
+        if(list.length === 0) { alert("Tidak ada data untuk diexport"); return; }
+        const data = list.map(p => ({
+            Nama: p.nama,
+            Kontingen: p.kont,
+            Kategori: p.cat,
+            Kelas: p.kelas,
+            Gender: p.gender
+        }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Daftar Peserta");
+        XLSX.writeFile(wb, "Data_Peserta_Loting.xlsx");
+    }
+
+    window.exportParticipantsPDF = function() {
+        const element = document.getElementById('lot-table-pdf-target');
+        const opt = { margin: 10, filename: 'Data_Peserta_Loting.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    window.handleExcelImport = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            
+            const currentParticipants = window.state.participants || [];
+            let importCount = 0;
+            
+            jsonData.forEach(row => {
+                const nama = (row.Nama || row.NAMA || row.nama || '').toString().toUpperCase();
+                const kont = (row.Kontingen || row.KONTINGEN || row.kontingen || row.Perguruan || row.PERGURUAN || '').toString().toUpperCase();
+                const kelas = (row.Kelas || row.KELAS || row.kelas || '').toString().toUpperCase();
+                const cat = (row.Kategori || row.KATEGORI || row.kategori || 'PRA REMAJA').toString().toUpperCase();
+                const gender = (row.Gender || row.GENDER || row.Jenis_Kelamin || row.PUTRA || 'PUTRA').toString().toUpperCase();
+
+                if (nama && kont && kelas) {
+                    currentParticipants.push({
+                        id: Date.now() + Math.random(),
+                        cat: cat,
+                        kelas: kelas,
+                        gender: gender,
+                        nama: nama,
+                        kont: kont,
+                        photo: "",
+                        round: 3,
+                        timer: 120
+                    });
+                    importCount++;
+                }
+            });
+
+            if (importCount > 0) {
+                window.broadcast('participants', currentParticipants);
+                alert(`${importCount} Data berhasil diimpor!`);
+                renderLotingTable();
+            } else {
+                alert("Tidak ada data yang valid ditemukan. Cek header kolom Excel Anda.");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        event.target.value = ""; 
+    }
+
+    window.applyLotingFilters = function() {
+        window.lotingFilterCat = document.getElementById('lot-f-cat').value;
+        window.lotingFilterKelas = document.getElementById('lot-f-kelas').value;
+        window.lotingFilterGender = document.getElementById('lot-f-gender').value;
+        window.lotingCurrentPage = 0;
+        renderLotingTable();
+    }
+
+    window.renderLotingTable = function() {
+        const body = document.getElementById('loting-table-body');
+        if(!body) return;
+        const list = window.state.participants || [];
+        
+        // Populate Filter Kelas if needed
+        const uniqueKelas = [...new Set(list.map(p => p.kelas))].sort();
+        const selectKelasLot = document.getElementById('lot-f-kelas');
+        if(selectKelasLot && selectKelasLot.options.length <= 1) {
+            const optionsHtml = '<option value="SEMUA">Semua Kelas</option>' + uniqueKelas.map(k => `<option value="${k}">${k}</option>`).join('');
+            selectKelasLot.innerHTML = optionsHtml;
+        }
+
+        const filtered = list.filter(p => (window.lotingFilterCat === 'SEMUA' || p.cat === window.lotingFilterCat) && (window.lotingFilterKelas === 'SEMUA' || p.kelas === window.lotingFilterKelas) && (window.lotingFilterGender === 'SEMUA' || p.gender === window.lotingFilterGender));
+        
+        document.getElementById('loting-counter-badge').innerText = `TOTAL: ${filtered.length}`;
+        
+        // PAGINATION LOGIC (30 Rows)
+        const rowsPerPage = 30;
+        const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+        if(window.lotingCurrentPage >= totalPages) window.lotingCurrentPage = totalPages - 1;
+        
+        const start = window.lotingCurrentPage * rowsPerPage;
+        const paginated = filtered.slice(start, start + rowsPerPage);
+        
+        document.getElementById('loting-page-info').innerText = `Hal ${window.lotingCurrentPage + 1} / ${totalPages}`;
+
+        if(paginated.length === 0) { 
+            body.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-slate-300 italic uppercase">Tidak ada data ditemukan</td></tr>`; 
+        } else {
+            body.innerHTML = paginated.map((p, i) => {
+                const photoIcon = p.photo ? `<img src="${p.photo}" class="w-6 h-6 rounded-full inline-block mr-2">` : `<i class="fas fa-user text-slate-300 mr-2"></i>`;
+                return `<tr class="border-b hover:bg-rose-50/30">
+                    <td class="p-3 text-center text-[7px] font-bold border-r border-slate-50">${start + i + 1}</td>
+                    <td class="p-3 uppercase">
+                        <div class="flex items-center text-[9px] font-black text-slate-800">${photoIcon} ${p.nama}</div>
+                        <div class="text-[7px] text-slate-400 font-bold tracking-tight">${p.kont}</div>
+                    </td>
+                    <td class="p-3 text-center uppercase font-black text-slate-600">${p.kelas}</td>
+                    <td class="p-3 text-center uppercase"><div class="text-[7px] font-black text-rose-500">${p.cat}</div></td>
+                    <td class="p-3 text-center uppercase font-bold text-slate-400 text-[7px]">${p.gender}</td>
+                    <td class="p-3 text-center uppercase">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="editParticipantLoting(${p.id})" class="text-blue-500 p-2"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteParticipantLoting(${p.id})" class="text-rose-400 p-2"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </td>
+                </tr>`
+            }).join('');
+        }
+    }
+
+    window.changeLotingPage = function(v) {
+        const list = window.state.participants || [];
+        const filtered = list.filter(p => (window.lotingFilterCat === 'SEMUA' || p.cat === window.lotingFilterCat) && (window.lotingFilterKelas === 'SEMUA' || p.kelas === window.lotingFilterKelas) && (window.lotingFilterGender === 'SEMUA' || p.gender === window.lotingFilterGender));
+        const totalPages = Math.max(1, Math.ceil(filtered.length / 30));
+        let next = window.lotingCurrentPage + v;
+        if(next >= 0 && next < totalPages) {
+            window.lotingCurrentPage = next;
+            renderLotingTable();
+        }
+    }
+
+    window.executeLoting = function() {
+        const list = window.state.participants || [];
+        if(list.length < 2) { alert("Minimal 2 peserta."); return; }
+        if(!confirm("Reset dan buat loting baru?")) return;
+        const updatedMatches = INITIAL_STATE.matches.map(m => ({...m}));
+        const groups = {};
+        list.forEach(p => { const key = `${p.cat}|${p.kelas}|${p.gender}`; if(!groups[key]) groups[key] = []; groups[key].push(p); });
+        let pIdx = 0; 
+        for(const k in groups) {
+            let pool = [...groups[k]];
+            for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+            const n = pool.length;
+            const rounds = Math.ceil(Math.log2(n));
+            const bracketSize = Math.pow(2, rounds);
+            let totalPartiesInCat = bracketSize - 1;
+            let catParties = [];
+            for(let i=0; i<totalPartiesInCat; i++) {
+                const m = updatedMatches[pIdx];
+                const info = groups[k][0];
+                m.cat = info.cat; m.kelas = info.kelas; m.gender = info.gender; m.maxBabak = info.round; m.maxTimer = info.timer;
+                m.fase = (i === totalPartiesInCat - 1) ? "FINAL" : (i >= totalPartiesInCat - 3) ? "SEMI FINAL" : (i >= totalPartiesInCat - 7) ? "PEREMPAT FINAL" : "PENYISIHAN";
+                catParties.push(m);
+                pIdx++;
+            }
+            let slots = new Array(bracketSize).fill(null);
+            let participantIdx = 0;
+            for(let i=0; i<bracketSize; i+=2) { if(participantIdx < n) slots[i] = pool[participantIdx++]; }
+            for(let i=1; i<bracketSize; i+=2) { if(participantIdx < n) slots[i] = pool[participantIdx++]; }
+            let round1Count = bracketSize / 2;
+            let currentLevel = []; 
+            for(let i=0; i<round1Count; i++) {
+                const m = catParties[i];
+                const p1 = slots[i*2];
+                const p2 = slots[i*2+1];
+                if(p1 && p2) {
+                    m.b = p1.nama; m.kb = p1.kont; m.photoB = p1.photo;
+                    m.m = p2.nama; m.km = p2.kont; m.photoM = p2.photo;
+                } else if(p1 && !p2) {
+                    m.b = p1.nama; m.kb = p1.kont; m.photoB = p1.photo; m.m = "BYE"; m.km = "-"; 
+                    m.status = "selesai"; m.winner = p1.nama; m.winnerSide = "biru";
+                } else if(!p1 && p2) {
+                    m.b = "BYE"; m.kb = "-"; m.m = p2.nama; m.km = p2.kont; m.photoM = p2.photo;
+                    m.status = "selesai"; m.winner = p2.nama; m.winnerSide = "merah";
+                }
+                currentLevel.push(m.p);
+            }
+            let processedSoFar = round1Count;
+            let levelIds = currentLevel;
+            while(levelIds.length > 1) {
+                let nextLevelIds = [];
+                for(let i=0; i<levelIds.length/2; i++) {
+                    const m = catParties[processedSoFar];
+                    const ref1 = updatedMatches[levelIds[i*2]-1];
+                    const ref2 = updatedMatches[levelIds[i*2+1]-1];
+                    ref1.nextP = { p: m.p, side: 'biru' };
+                    ref2.nextP = { p: m.p, side: 'merah' };
+                    const bName = (ref1.status === 'selesai') ? ref1.winner : "PEMENANG PARTAI " + ref1.p;
+                    const mName = (ref2.status === 'selesai') ? ref2.winner : "PEMENANG PARTAI " + ref2.p;
+                    m.b = bName; m.kb = (ref1.status === 'selesai') ? (ref1.winnerSide==='biru'?ref1.kb:ref1.km) : "---";
+                    m.photoB = (ref1.status === 'selesai') ? (ref1.winnerSide==='biru'?ref1.photoB:ref1.photoM) : "";
+                    m.m = mName; m.km = (ref2.status === 'selesai') ? (ref2.winnerSide==='biru'?ref2.kb:ref2.km) : "---";
+                    m.photoM = (ref2.status === 'selesai') ? (ref2.winnerSide==='biru'?ref2.photoB:ref2.photoM) : "";
+                    if (m.b !== "BYE" && m.b.indexOf("PEMENANG") === -1 && m.m === "BYE") { m.status = 'selesai'; m.winner = m.b; m.winnerSide = 'biru'; }
+                    else if (m.m !== "BYE" && m.m.indexOf("PEMENANG") === -1 && m.b === "BYE") { m.status = 'selesai'; m.winner = m.m; m.winnerSide = 'merah'; }
+                    nextLevelIds.push(m.p);
+                    processedSoFar++;
+                }
+                levelIds = nextLevelIds;
+            }
+        }
+        window.broadcast('matches', updatedMatches);
+        alert("Loting Berhasil!"); 
+        changeScreen('jadwal');
+    }
+
+    window.toggleLandscape = function() {
+        if (!document.fullscreenElement) { document.documentElement.requestFullscreen().then(() => { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(e => console.log(e)); }); } else document.exitFullscreen();
+    }
+
+    window.toggleMonitorLaptopMode = function() { document.getElementById('screen-monitor').classList.toggle('monitor-laptop-mode'); }
+
+    window.updateUI = function() {
+        const mb = window.state.bertandingIdx >= 0 ? window.state.matches[window.state.bertandingIdx] : window.state.matches[window.state.idx];
+        const mp = window.state.persiapanIdx >= 0 ? window.state.matches[window.state.persiapanIdx] : null;
+        const tStr = (s) => `${Math.floor(s/60).toString().padStart(2,'0')}:${((s||0)%60).toString().padStart(2,'0')}`;
+        ['dw-timer-disp', 'mon-timer-disp', 'jr-timer-disp', 'op-timer-disp'].forEach(id => { const el = document.getElementById(id); if(el) el.innerText = tStr(window.state.timer); });
+        if(document.getElementById('dw-babak-disp')) document.getElementById('dw-babak-disp').innerText = "BABAK " + window.state.babak;
+        if(document.getElementById('jr-round-badge')) document.getElementById('jr-round-badge').innerText = "BABAK " + window.state.babak;
+        [1,2,3].forEach(b => { const el = document.getElementById('op-btn-b' + b); if(el) el.classList.toggle('active-babak', window.state.babak === b); });
+        if(window.state.juriStatus) { ['j1', 'j2', 'j3'].forEach(j => { ['lamp-', 'select-lamp-'].forEach(pre => { const el = document.getElementById(pre+j); if(el) { el.classList.toggle('juri-lamp-green', window.state.juriStatus[j]); el.classList.toggle('juri-lamp-red', !window.state.juriStatus[j]); } }); }); }
+        const detailFormat = (p) => { if(!p || (!p.m && !p.b)) return "BELUM ADA DATA"; return `PARTAI ${p.p} / ${p.fase} ${p.kelas} ${p.cat} ${p.gender}`.toUpperCase(); }
+        if(document.getElementById('dw-live-detail')) document.getElementById('dw-live-detail').innerText = detailFormat(mb);
+        if(document.getElementById('dw-prep-detail')) document.getElementById('dw-prep-detail').innerText = detailFormat(mp);
+
+        let tm = calculateTotal('merah'), tb = calculateTotal('biru');
+        let threshold = 30; 
+        const currentCat = mb.cat.toUpperCase();
+        if(currentCat.includes("USIA DINI") || currentCat.includes("PRA REMAJA")) { threshold = 20; }
+        let autoWmpB = false, autoWmpM = false;
+        const pointDiff = Math.abs(tm - tb);
+        if (pointDiff >= threshold) { if (tm > tb) autoWmpB = true; else if (tb > tm) autoWmpM = true; }
+        const glowB = (typeof tb === 'number' && typeof tm === 'number') ? (tb > tm ? 'leader-glow' : '') : '';
+        const glowM = (typeof tm === 'number' && typeof tb === 'number') ? (tm > tb ? 'leader-glow' : '') : '';
+        
+        const renderScoring = (pre) => {
+            const area = document.getElementById(`${pre}-scoring-area`);
+            if(!area) return;
+            if(mb.status === 'selesai' && mb.winnerSide) { 
+                const isRed = mb.winnerSide === 'merah'; 
+                const isTie = mb.winnerSide === 'tie';
+                const bgClass = isTie ? 'bg-slate-800' : (isRed ? 'sudut-merah-bg' : 'sudut-biru-bg');
+                const winName = isTie ? 'KEPUTUSAN DEWAN' : (isRed ? mb.m : mb.b);
+                const winKont = isTie ? 'SCORE SERI' : (isRed ? mb.km : mb.kb);
+                const winPhoto = isTie ? '' : (isRed ? mb.photoM : mb.photoB);
+                const avWin = winPhoto ? `<img src="${winPhoto}" class="w-32 h-32 rounded-full border-4 border-white shadow-xl mb-4">` : '';
+                area.innerHTML = `<div class="col-span-full ${bgClass} p-8 rounded-3xl text-center shadow-2xl flex flex-col items-center justify-center min-h-[220px] animate-pulse uppercase"><p class="text-[10px] font-black mb-2 uppercase">PEMENANG PARTAI ${mb.p} ${mb.kelas} ${mb.fase} ${mb.cat} ${mb.gender}</p>${avWin}<h1 class="text-3xl font-black uppercase leading-tight">${winName}</h1><h2 class="text-xl font-bold uppercase opacity-90">${winKont}</h2></div>`; 
+                return; 
+            }
+            const valB = window.state.biru.dis ? "DISK" : window.state.biru.ud ? "UD" : (window.state.biru.wmp || autoWmpB) ? "WMP" : tb;
+            const valM = window.state.merah.dis ? "DISK" : window.state.merah.ud ? "UD" : (window.state.merah.wmp || autoWmpM) ? "WMP" : tm;
+            let monDisplayB = valB; let monDisplayM = valM;
+            let monBgB = "sudut-biru-bg"; let monBgM = "sudut-merah-bg";
+            let monFontSizeB = "text-5xl mon-score-val"; let monFontSizeM = "text-5xl mon-score-val";
+            let varIndicatorHtml = "";
+            if (pre === 'mon' && window.state.var && window.state.var.active) {
+                const vType = window.state.var.type; const votes = window.state.var.votes;
+                const vArr = [votes.j1, votes.j2, votes.j3].filter(x => x !== '');
+                monDisplayB = `VERIFIKASI ${vType}`; monDisplayM = `VERIFIKASI ${vType}`;
+                monFontSizeB = "text-xl"; monFontSizeM = "text-xl";
+                monBgB = "bg-yellow-500 !text-slate-900"; monBgM = "bg-yellow-500 !text-slate-900";
+                let boxes = [];
+                for(let i=1; i<=3; i++) {
+                    const v = votes['j'+i];
+                    if(vArr.length < 3) { boxes.push(`<div class="mon-var-col var-shuffle-${i} uppercase">JURI ${i}</div>`); } 
+                    else { const bgCol = v === 'biru' ? 'bg-blue-600' : (v === 'merah' ? 'bg-red-600' : 'bg-yellow-500'); boxes.push(`<div class="mon-var-col ${bgCol} uppercase">JURI ${i}</div>`); }
+                }
+                varIndicatorHtml = `<div class="absolute inset-x-0 top-0 p-2 flex gap-2 z-10">${boxes.join('')}</div>`;
+                if (vArr.length === 3) {
+                    const count = { biru: 0, merah: 0, kuning: 0 }; vArr.forEach(v => { if(count[v] !== undefined) count[v]++; });
+                    if (count.biru >= 2) { monDisplayB = "VALID"; monDisplayM = "VALID"; monFontSizeB = "text-3xl"; monFontSizeM = "text-3xl"; monBgB = "sudut-biru-bg"; monBgM = "sudut-biru-bg"; }
+                    else if (count.merah >= 2) { monDisplayB = "VALID"; monDisplayM = "VALID"; monFontSizeB = "text-3xl"; monFontSizeM = "text-3xl"; monBgB = "sudut-merah-bg"; monBgM = "sudut-merah-bg"; }
+                    else if (count.kuning >= 2) { monDisplayB = "INVALID"; monDisplayM = "INVALID"; monFontSizeB = "text-3xl"; monFontSizeM = "text-3xl"; monBgB = "bg-yellow-500 !text-slate-900"; monBgM = "bg-yellow-500 !text-slate-900"; }
+                }
+            }
+            const fsB = pre === 'mon' ? monFontSizeB : ((typeof valB === 'string' && valB.length > 3) ? 'text-2xl' : (valB === "WMP" ? 'text-4xl' : 'text-6xl mon-score-val'));
+            const fsM = pre === 'mon' ? monFontSizeM : ((typeof valM === 'string' && valM.length > 3) ? 'text-2xl' : (valM === "WMP" ? 'text-4xl' : 'text-6xl mon-score-val'));
+            const avB = mb.photoB ? `<img src="${mb.photoB}" class="avatar-circle">` : `<div class="avatar-circle flex items-center justify-center text-slate-300 bg-white"><i class="fas fa-user text-xl"></i></div>`;
+            const avM = mb.photoM ? `<img src="${mb.photoM}" class="avatar-circle">` : `<div class="avatar-circle flex items-center justify-center text-slate-300 bg-white"><i class="fas fa-user text-xl"></i></div>`;
+            
+            if(pre === 'dw') { 
+                area.innerHTML = `<div id="dw-box-b" class="sudut-biru-bg p-3 rounded-2xl text-left flex flex-col justify-between min-h-[180px] border-b-4 border-blue-800 shadow-md relative ${glowB}"><div class="flex items-center gap-3 uppercase">${avB}<div class="overflow-hidden uppercase"><p class="text-[9px] font-black uppercase truncate text-white leading-tight">${mb.b||'BIRU'}</p><p class="text-[7px] font-bold opacity-80 uppercase truncate">${mb.kb||'---'}</p></div></div><div class="text-center my-1 uppercase"><h2 class="${fsB} font-black leading-none">${valB}</h2></div><div class="space-y-2"><div class="flex justify-center gap-1 my-1"><button onclick="dwCorrectScore('biru', 1)" class="dw-correct-btn">-1</button><button onclick="dwCorrectScore('biru', 2)" class="dw-correct-btn">-2</button><button onclick="dwAddScore('biru', 1)" class="dw-add-btn">+1</button><button onclick="dwAddScore('biru', 2)" class="dw-add-btn">+2</button></div><div class="flex justify-center gap-3"><div id="dw-b-j1" class="mon-jr-indicator w-5 h-5 text-[7px] uppercase">J1</div><div id="dw-b-j2" class="mon-jr-indicator w-5 h-5 text-[7px] uppercase">J2</div><div id="dw-b-j3" class="mon-jr-indicator w-5 h-5 text-[7px] uppercase">J3</div></div><div class="flex justify-center gap-1 uppercase"><div id="dw-pen-b-binaan1" class="mon-pen-icon w-4 h-4 text-[8px]"><i class="fas fa-hand-point-left"></i></div><div id="dw-pen-b-binaan2" class="mon-pen-icon w-4 h-4 text-[8px]"><i class="fas fa-hand-peace rotate-90"></i></div><div id="dw-pen-b-teguran1" class="mon-pen-icon w-4 h-4 text-[8px]"><i class="fas fa-hand-point-up"></i></div><div id="dw-pen-b-teguran2" class="mon-pen-icon w-4 h-4 text-[8px]"><i class="fas fa-hand-peace"></i></div><div id="dw-pen-b-peringatan1" class="mon-pen-icon w-4 h-4 text-[8px]">1</div><div id="dw-pen-b-peringatan2" class="mon-pen-icon w-4 h-4 text-[8px]">2</div></div></div></div><div id="dw-box-m" class="sudut-merah-bg p-3 rounded-2xl text-left flex flex-col justify-between min-h-[180px] border-b-4 border-red-800 shadow-md relative ${glowM}"><div class="flex items-center gap-3 uppercase">${avM}<div class="overflow-hidden uppercase"><p class="text-[9px] font-black uppercase truncate text-white leading-tight">${mb.m||'MERAH'}</p><p class="text-[7px] font-bold opacity-80 uppercase truncate">${mb.km||'---'}</p></div></div><div class="text-center my-1 uppercase"><h2 class="${fsM} font-black leading-none">${valM}</h2></div><div class="space-y-2"><div class="flex justify-center gap-1 my-1"><button onclick="dwCorrectScore('merah', 1)" class="dw-correct-btn">-1</button><button onclick="dwCorrectScore('merah', 2)" class="dw-correct-btn">-2</button><button onclick="dwAddScore('merah', 1)" class="dw-add-btn">+1</button><button onclick="dwAddScore('merah', 2)" class="dw-add-btn">+2</button></div><div class="flex justify-center gap-3"><div id="dw-m-j1" class="mon-jr-indicator w-5 h-5 text-[7px] uppercase">J1</div><div id="dw-m-j2" class="mon-jr-indicator w-5 h-5 text-[7px] uppercase">J2</div><div id="dw-m-j3" class="mon-jr-indicator w-5 h-5 text-[7px] uppercase">J3</div></div><div class="flex justify-center gap-1 uppercase"><div id="dw-pen-m-binaan1" class="mon-pen-icon w-4 h-4 text-[8px]"><i class="fas fa-hand-point-right"></i></div><div id="dw-pen-m-binaan2" class="mon-pen-icon w-4 h-4 text-[8px]"><i class="fas fa-hand-peace rotate-90"></i></div><div id="dw-pen-m-teguran1" class="mon-pen-icon w-4 h-4 text-[8px]"><i class="fas fa-hand-point-up"></i></div><div id="dw-pen-m-teguran2" class="mon-pen-icon w-4 h-4 text-[8px]"><i class="fas fa-hand-peace"></i></div><div id="dw-pen-m-peringatan1" class="mon-pen-icon w-4 h-4 text-[8px]">1</div><div id="dw-pen-m-peringatan2" class="mon-pen-icon w-4 h-4 text-[8px]">2</div></div></div></div>`; 
+            } else { 
+                const curJatB = (window.state.biru.jatHistory || []).filter(j => j.round === window.state.babak).length;
+                const curJatM = (window.state.merah.jatHistory || []).filter(j => j.round === window.state.babak).length;
+                const matchDesc = `Partai ${mb.p} / ${mb.fase} / ${mb.kelas} ${mb.cat} ${mb.gender}`.toUpperCase();
+                area.innerHTML = `
+                <div class="mon-kejuaraan-header col-span-5 uppercase">
+                    <img src="https://iili.io/nYz41KF.png" class="mon-logo-side uppercase">
+                    <div class="mon-kejuaraan-title-text uppercase">
+                        <h1 class="uppercase">TRY OUT PENCAK SILAT KABUPATEN SIDOARJO 2026</h1>
+                        <h2 class="uppercase">SIDOARJO, 30 SEPTEMBER 2026</h2>
+                    </div>
+                    <img src="https://iili.io/CZgpAb4.jpg" class="mon-logo-side uppercase">
+                </div>
+                <div id="mon-match-info-header" class="col-span-5 bg-slate-900 text-white p-2 rounded-xl text-center font-black uppercase tracking-widest text-[10px] mb-2 shadow-sm italic uppercase">
+                    ${matchDesc}
+                </div>
+                <div class="flex flex-col items-center justify-end h-full uppercase">
+                    <div class="mon-dropping-box uppercase"><span class="mon-dropping-label uppercase">Drop</span><span class="mon-dropping-val uppercase">${curJatB}x</span></div>
+                    <div class="mon-pen-grid-v uppercase">
+                        <div id="mon-pen-b-binaan1" class="mon-pen-icon uppercase"><i class="fas fa-hand-point-left"></i></div>
+                        <div id="mon-pen-b-binaan2" class="mon-pen-icon uppercase"><i class="fas fa-hand-peace rotate-90"></i></div>
+                        <div id="mon-pen-b-teguran1" class="mon-pen-icon uppercase"><i class="fas fa-hand-point-up"></i></div>
+                        <div id="mon-pen-b-teguran2" class="mon-pen-icon uppercase"><i class="fas fa-hand-peace"></i></div>
+                        <div id="mon-pen-b-peringatan1" class="mon-pen-icon uppercase">1</div>
+                        <div id="mon-pen-b-peringatan2" class="mon-pen-icon uppercase">2</div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center flex-1 uppercase">
+                    <div class="flex items-center gap-3 w-full mb-3 px-2 uppercase">${avB}<div class="overflow-hidden uppercase"><p class="text-[12px] font-black uppercase truncate text-slate-800 leading-tight mon-name-val">${mb.b||'BIRU'}</p><p class="text-[9px] font-bold text-blue-500 uppercase italic truncate mon-kont-val uppercase">${mb.kb||'---'}</p></div></div>
+                    <div id="mon-box-b" class="${monBgB} p-4 rounded-3xl text-center shadow-lg border-b-8 border-black/20 transition-all mon-card-box ${glowB} uppercase">${varIndicatorHtml}<div class="flex h-full items-center justify-center uppercase"><h2 class="${fsB} font-black leading-none uppercase">${monDisplayB}</h2></div></div>
+                    <div class="flex gap-1 mt-3 uppercase">
+                        <div id="mon-b-j1" class="mon-jr-indicator uppercase">J1</div>
+                        <div id="mon-b-j2" class="mon-jr-indicator uppercase">J2</div>
+                        <div id="mon-b-j3" class="mon-jr-indicator uppercase">J3</div>
+                    </div>
+                </div>
+                <div class="mon-center-divider uppercase">
+                    <div class="font-black text-slate-800 font-mono mb-1 uppercase" style="font-size: 28px;" id="mon-timer-disp">${tStr(window.state.timer)}</div>
+                    <div class="flex flex-col gap-1 mt-1 items-center uppercase">
+                        <div class="mon-round-indicator ${window.state.babak === 1 ? 'mon-round-active' : 'mon-round-inactive'} uppercase">I</div>
+                        <div class="mon-round-indicator ${window.state.babak === 2 ? 'mon-round-active' : 'mon-round-inactive'} uppercase">II</div>
+                        <div class="mon-round-indicator ${window.state.babak === 3 ? 'mon-round-active' : 'mon-round-inactive'} uppercase">III</div>
+                        <span class="text-[7px] font-black text-slate-400 mt-1 uppercase">ROUND</span>
+                    </div>
+                    <div class="flex-1 uppercase"></div>
+                    <div class="flex flex-row gap-2 mb-2 justify-center w-full uppercase">
+                        <div id="mon-mid-puk" class="mon-tech-mid-icon uppercase"><i class="fas fa-hand-fist"></i></div>
+                        <div id="mon-mid-ten" class="mon-tech-mid-icon uppercase"><i class="fas fa-shoe-prints -rotate-90"></i></div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center flex-1 uppercase">
+                    <div class="flex items-center justify-end gap-3 w-full mb-3 px-2 uppercase">
+                        <div class="overflow-hidden text-right uppercase">
+                            <p class="text-[12px] font-black uppercase truncate text-slate-800 leading-tight mon-name-val">${mb.m||'MERAH'}</p>
+                            <p class="text-[9px] font-bold text-red-500 uppercase italic truncate mon-kont-val uppercase">${mb.km||'---'}</p>
+                        </div>
+                        ${avM}
+                    </div>
+                    <div id="mon-box-m" class="${monBgM} p-4 rounded-3xl text-center shadow-lg border-b-8 border-black/20 transition-all mon-card-box ${glowM} uppercase">${varIndicatorHtml}<div class="flex h-full items-center justify-center uppercase"><h2 class="${fsM} font-black leading-none uppercase">${monDisplayM}</h2></div></div>
+                    <div class="flex gap-1 mt-3 uppercase">
+                        <div id="mon-m-j1" class="mon-jr-indicator uppercase">J1</div>
+                        <div id="mon-m-j2" class="mon-jr-indicator uppercase">J2</div>
+                        <div id="mon-m-j3" class="mon-jr-indicator uppercase">J3</div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center justify-end h-full uppercase">
+                    <div class="mon-dropping-box uppercase"><span class="mon-dropping-label uppercase">Drop</span><span class="mon-dropping-val uppercase">${curJatM}x</span></div>
+                    <div class="mon-pen-grid-v uppercase">
+                        <div id="mon-pen-m-binaan1" class="mon-pen-icon uppercase"><i class="fas fa-hand-point-right"></i></div>
+                        <div id="mon-pen-m-binaan2" class="mon-pen-icon uppercase"><i class="fas fa-hand-peace rotate-90"></i></div>
+                        <div id="mon-pen-m-teguran1" class="mon-pen-icon uppercase"><i class="fas fa-hand-point-up"></i></div>
+                        <div id="mon-pen-m-teguran2" class="mon-pen-icon uppercase"><i class="fas fa-hand-peace"></i></div>
+                        <div id="mon-pen-m-peringatan1" class="mon-pen-icon uppercase">1</div>
+                        <div id="mon-pen-m-peringatan2" class="mon-pen-icon uppercase">2</div>
+                    </div>
+                </div>`; 
+            }
+        };
+        renderScoring('dw'); renderScoring('mon');
+        ['biru', 'merah'].forEach(s => { 
+            const sPre = s === 'biru' ? 'b-' : 'm-'; const hist = window.state[s].penHistory || []; 
+            const last = window.state.lastHit || { time: 0, multiple: [], type: 0 }; 
+            const isAct = (last.sudut === s && (Date.now() - last.time < 700)); 
+            [1,2,3].forEach(j => { 
+                const jAct = (isAct && last.multiple.includes('j'+j)); 
+                ['dw-', 'mon-'].forEach(pre => { const el = document.getElementById(pre+sPre+'j'+j); if(el) el.classList.toggle('mon-jr-active', jAct); });
+            }); 
+            ['binaan1', 'binaan2', 'teguran1', 'teguran2', 'peringatan1', 'peringatan2'].forEach(p => { 
+                const act = p.startsWith('peringatan') ? hist.some(x => x.type === p) : hist.some(x => x.type === p && x.round === window.state.babak); 
+                ['dw', 'mon'].forEach(pre => { const el = document.getElementById(`${pre}-pen-${sPre}${p}`); if(el) { if(s==='biru') el.classList.toggle('mon-pen-active-b', act); else el.classList.toggle('mon-pen-active-m', act); } }); 
+            }); 
+        });
+        const lastH = window.state.lastHit || { time: 0, type: 0 };
+        const isRecent = (Date.now() - lastH.time < 700);
+        const midPuk = document.getElementById('mon-mid-puk'); const midTen = document.getElementById('mon-mid-ten');
+        if(midPuk) midPuk.classList.toggle('mon-tech-mid-active', isRecent && lastH.type === 1);
+        if(midTen) midTen.classList.toggle('mon-tech-mid-active', isRecent && lastH.type === 2);
+
+        if(window.localJuri) {
+            document.getElementById('jr-role-name').innerText = `JURI ${window.localJuri}`;
+            document.getElementById('jr-partai-info').innerText = `PARTAI ${mb.p} / BABAK ${window.state.babak} / ${mb.fase} / ${mb.cat} ${mb.kelas} ${mb.gender}`.toUpperCase();
+            document.getElementById('jr-b-nama-full').innerText = mb.b || "BIRU"; document.getElementById('jr-b-kont-full').innerText = mb.kb || "---";
+            document.getElementById('jr-m-nama-full').innerText = mb.m || "MERAH"; document.getElementById('jr-m-kont-full').innerText = mb.km || "---";
+            const isRunning = window.state.isRunning; ['jr-btn-hit-b1', 'jr-btn-hit-b2', 'jr-btn-hit-m1', 'jr-btn-hit-m2'].forEach(btnId => { const btn = document.getElementById(btnId); if(btn) btn.classList.toggle('jr-hit-btn-off', !isRunning); });
+            if (window.state.var.active) { document.getElementById('jr-var-overlay').classList.add('active'); document.getElementById('jr-var-header').innerText = `Partai ${mb.p} ${mb.fase} ${mb.kelas} ${mb.cat} ${mb.gender}`.toUpperCase(); document.getElementById('jr-var-b-name').innerText = mb.b || "BIRU"; document.getElementById('jr-var-b-kont').innerText = mb.kb || "---"; document.getElementById('jr-var-m-name').innerText = mb.m || "MERAH"; document.getElementById('jr-var-m-kont').innerText = mb.km || "---"; const v = window.state.var.votes['j' + window.localJuri]; const container = document.getElementById('jr-vote-container'); ['biru', 'merah', 'kuning'].forEach(c => { const el = document.getElementById(`jr-vote-${c}`); if(el) { el.classList.remove('circle-active', 'jr-vote-selected'); if(v) { container.classList.add('jr-vote-locked'); if(v === c) el.classList.add('circle-active', 'jr-vote-selected'); } else container.classList.remove('jr-vote-locked'); } }); } else document.getElementById('jr-var-overlay').classList.remove('active');
+        }
+        const dv = document.getElementById('modal-dw-var-result'); const isDewanActive = document.getElementById('screen-dewan').classList.contains('active');
+        if(window.state.var.active && isDewanActive) { 
+            dv.classList.add('active'); document.getElementById('dw-var-info-full').innerText = `VERIFIKASI ${window.state.var.type} - PARTAI ${mb.p}\n${mb.b} VS ${mb.m}`.toUpperCase(); 
+            const votes = window.state.var.votes; const vArr = [votes.j1, votes.j2, votes.j3].filter(x => x !== ''); const autoBox = document.getElementById('dw-var-auto-box'); 
+            if (vArr.length === 3) { 
+                const count = { biru: 0, merah: 0, kuning: 0 }; vArr.forEach(v => count[v]++); const type = window.state.var.type;
+                if (count.biru >= 2) { autoBox.innerText = `VALID (${type})`; autoBox.className = "w-full py-6 rounded-2xl mb-8 font-black text-xl uppercase widest text-white shadow-xl bg-blue-600"; } 
+                else if (count.merah >= 2) { autoBox.innerText = `VALID (${type})`; autoBox.className = "w-full py-6 rounded-2xl mb-8 font-black text-xl uppercase widest text-white shadow-xl bg-red-600"; } 
+                else if (count.kuning >= 2) { autoBox.innerText = "INVALID / TIDAK SAH"; autoBox.className = "w-full py-6 rounded-2xl mb-8 font-black text-xl uppercase widest text-white shadow-xl bg-yellow-500"; } 
+            } else { autoBox.innerText = "MENUNGGU JURI..."; autoBox.className = "w-full py-6 rounded-2xl mb-8 font-black text-xl uppercase widest text-white shadow-xl bg-slate-800"; } 
+            ['j1', 'j2', 'j3'].forEach((j, i) => { const v = window.state.var.votes[j]; const el = document.getElementById(`dw-vote-${i+1}`); if(el) { el.className = "circle-vote " + (v === 'biru' ? 'bg-blue-600' : v === 'merah' ? 'bg-red-600' : v === 'kuning' ? 'bg-yellow-500' : 'bg-slate-100'); if(v) el.classList.add('circle-active'); el.innerHTML = v ? '<i class="fas fa-check"></i>' : (i+1); } }); 
+        } else if(dv) dv.classList.remove('active');
+        if(isDewanActive) { ['biru', 'merah'].forEach(s => { const pr = s === 'biru' ? 'b' : 'm'; const sc = window.state[s]; const hs = sc.penHistory || []; document.getElementById(`stat-${pr}-jatuhan`).innerText = Math.floor((sc.jat || 0) / 3); document.getElementById(`stat-${pr}-binaan`).innerText = hs.filter(p => p.type.includes('binaan')).length; document.getElementById(`stat-${pr}-teguran`).innerText = hs.filter(p => p.type.includes('teguran')).length; document.getElementById(`stat-${pr}-peringatan`).innerText = hs.filter(p => p.type.includes('peringatan')).length; }); }
+        syncPenaltyVisuals('merah'); syncPenaltyVisuals('biru');
+
+        // Logic Video VAR Monitor Update
+        const monOverlay = document.getElementById('mon-video-var-overlay');
+        if(monOverlay) {
+            if(window.state.videoVar && window.state.videoVar.showOnMonitor) {
+                if(monOverlay.classList.contains('hidden')) {
+                    monOverlay.classList.remove('hidden');
+                    monOverlay.classList.add('flex');
+                    
+                    // Restart CSS animation for progress bar
+                    const bar = document.getElementById('mon-var-progress');
+                    if(bar) {
+                        bar.style.animation = 'none';
+                        bar.offsetHeight; /* trigger reflow */
+                        bar.style.animation = null; 
+                    }
+                    
+                    // Start monitor camera automatically
+                    const monVideo = document.getElementById('mon-var-video-player');
+                    if (monVideo && !monVideo.srcObject) {
+                        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                            .then(stream => { monVideo.srcObject = stream; })
+                            .catch(e => console.log('Monitor cam err', e));
+                        }
+                    }
+                }
+            } else {
+                monOverlay.classList.remove('flex');
+                monOverlay.classList.add('hidden');
+                
+                // Stop monitor camera automatically
+                const monVideo = document.getElementById('mon-var-video-player');
+                if (monVideo && monVideo.srcObject) {
+                    monVideo.srcObject.getTracks().forEach(t => t.stop());
+                    monVideo.srcObject = null;
+                }
+            }
+        }
+    }
+
+    window.toggleStatsTable = function() { const c = document.getElementById('dw-stats-container'), t = document.getElementById('stats-toggle-text'); const open = c.classList.toggle('open'); t.innerText = open ? "Tutup Statistik Poin" : "Tampilkan Statistik Poin"; }
+    window.calculateTotal = function(s) { const sc = window.state[s]; if(sc.dis || sc.ud || sc.wmp) return 0; const j1T = (sc.juri.j1 || [0,0,0]).reduce((a,b)=>a+b,0), j2T = (sc.juri.j2 || [0,0,0]).reduce((a,b)=>a+b,0), j3T = (sc.juri.j3 || [0,0,0]).reduce((a,b)=>a+b,0); const sorted = [j1T, j2T, j3T].sort((a,b)=>a-b); const tot = sorted[1]; const pMap = { teguran1:1, teguran2:2, peringatan1:5, peringatan2:10 }; let tp = 0; (sc.penHistory || []).forEach(i => tp += (pMap[i.type]||0)); return (tot || 0) + (sc.jat || 0) - tp; }
+    window.initJuri = function(n) { if(window.state.juriStatus['j'+n]) { const alertBox = document.getElementById('juri-alert-box'); alertBox.style.opacity = '1'; setTimeout(() => { alertBox.style.opacity = '0'; }, 3000); return; } window.localJuri = n; localStorage.setItem('pencak_role_juri', n); window.broadcast(`juriStatus/j${n}`, true); changeScreen('juri'); }
+    
+    window.exitJuri = function() { if(window.localJuri) { window.broadcast(`juriStatus/j${window.localJuri}`, false); window.localJuri = 0; localStorage.removeItem('pencak_role_juri'); changeScreen('juri-select'); } }
+    
+    window.sendHitDirect = function(sudut, value) { 
+        if(!window.state.isRunning) return; 
+        const now = Date.now(); const juriKey = 'j' + window.localJuri; const babakIdx = window.state.babak - 1; const valKey = 'v' + value; 
+        window.state.buffer[sudut][valKey][juriKey] = now; window.broadcast(`buffer/${sudut}/${valKey}/${juriKey}`, now); 
+        const hits = window.state.buffer[sudut][valKey]; let juriesInvolved = []; 
+        ['j1', 'j2', 'j3'].forEach(k => { if (hits[k] > 0 && (now - hits[k]) <= 2000) { juriesInvolved.push(k); } });
+        if (juriesInvolved.length >= 2) { 
+            juriesInvolved.forEach(jk => { 
+                const currentVal = window.state[sudut].juri[jk][babakIdx]; const newVal = currentVal + value;
+                window.state[sudut].juri[jk][babakIdx] = newVal; window.broadcast(`${sudut}/juri/${jk}/${babakIdx}`, newVal); 
+                window.state.buffer[sudut][valKey][jk] = 0; window.broadcast(`buffer/${sudut}/${valKey}/${jk}`, 0); 
+            }); 
+            const freqKey = (value === 1) ? 'pukulanFreq' : 'tendanganFreq'; 
+            window.state[sudut][freqKey] = (window.state[sudut][freqKey] || 0) + 1; window.broadcast(`${sudut}/${freqKey}`, window.state[sudut][freqKey]); 
+            const snd = document.getElementById('snd-hit'); if(snd) { snd.currentTime = 0; snd.play(); } 
+            window.broadcast(`lastHit`, { sudut: sudut, time: now, multiple: juriesInvolved, type: value }); updateUI();
+        } 
+    }
+
+    window.dwCorrectScore = function(s, v) { const bi = window.state.babak - 1; ['j1','j2','j3'].forEach(k => window.broadcast(`${s}/juri/${k}/${bi}`, window.state[s].juri[k][bi]-v)); }
+    window.dwAddScore = function(s, v) { const bi = window.state.babak - 1; ['j1','j2','j3'].forEach(k => window.broadcast(`${s}/juri/${k}/${bi}`, window.state[s].juri[k][bi]+v)); }
+    window.timerCtrl = function(cmd) { if(cmd === 'start') { window.broadcast('isRunning', true); startTimerLogic(); } else if(cmd === 'stop') { window.broadcast('isRunning', false); if(tInt) clearInterval(tInt); } else if(cmd === 'reset') { window.broadcast('isRunning', false); window.broadcast('timer', window.state.matches[window.state.idx].maxTimer); } }
+    function startTimerLogic() { if(tInt) clearInterval(tInt); tInt = setInterval(() => { if(window.state.isRunning && window.state.timer > 0) window.broadcast('timer', window.state.timer - 1); else if(window.state.timer <= 0) { clearInterval(tInt); window.broadcast('isRunning', false); } }, 1000); }
+    window.setRound = function(n) { if(!window.state.isRunning) window.broadcast('babak', n); }
+    window.addJatuhan = function(s) { 
+        const currentHist = window.state[s].jatHistory || []; currentHist.push({ round: window.state.babak, timestamp: Date.now() });
+        window.broadcast(`${s}/jatHistory`, currentHist); window.broadcast(`${s}/jat`, (window.state[s].jat || 0) + 3); 
+    }
+    window.anulirJatuhan = function(s) { 
+        if(window.state[s].jat >= 3) {
+            const currentHist = window.state[s].jatHistory || []; const idx = currentHist.findLastIndex(x => x.round === window.state.babak);
+            if(idx > -1) { currentHist.splice(idx, 1); window.broadcast(`${s}/jatHistory`, currentHist); }
+            window.broadcast(`${s}/jat`, window.state[s].jat - 3);
+        }
+    }
+    window.sendVarVote = function(c) { if(!window.localJuri || window.state.var.votes['j' + window.localJuri]) return; window.broadcast(`var/votes/j${window.localJuri}`, c); }
+    window.startVAR = function(t) { window.broadcast('var', { active: true, type: t, votes: { j1: '', j2: '', j3: '' } }); closeModal('modal-var-type'); }
+    window.closeVAR = function() { if(window.state.var.type === 'JATUHAN') { const count = { biru: 0, merah: 0 }; Object.values(window.state.var.votes).forEach(v => { if(count[v] !== undefined) count[v]++; }); if(count.biru >= 2) setTimeout(() => { addJatuhan('biru'); }, 1000); else if(count.merah >= 2) setTimeout(() => { addJatuhan('merah'); }, 1000); } window.broadcast('var/active', false); }
+    window.applyPenalty = function(s, p) { const cp = [...(window.state[s].penHistory || [])]; const idx = cp.findIndex(x => x.type === p && x.round === window.state.babak); (idx > -1) ? cp.splice(idx, 1) : cp.push({ type: p, round: window.state.babak }); window.broadcast(`${s}/penHistory`, cp); }
+    function syncPenaltyVisuals(s) { const pr = s === 'merah' ? 'm-' : 'b-'; const hist = window.state[s].penHistory || []; ['binaan1', 'binaan2', 'teguran1', 'teguran2', 'peringatan1', 'peringatan2'].forEach(t => { const b = document.getElementById(pr + t); if(b) { const act = t.startsWith('peringatan') ? hist.some(p => p.type === t) : hist.some(p => p.type === t && p.round === window.state.babak); b.classList.toggle('btn-pressed', act); } }); }
+    window.renderSekreForm = function() { 
+        const cont = document.getElementById('sekre-form-container'); const start = window.sekrePage * 10; 
+        cont.innerHTML = window.state.matches.slice(start, start + 10).map((m, idx) => { 
+            const i = start + idx; 
+            const avatarB = m.photoB ? `<img src="${m.photoB}" class="avatar-sekre mr-2">` : `<div class="avatar-sekre mr-2 flex items-center justify-center text-[10px] text-slate-300 uppercase"><i class="fas fa-user uppercase"></i></div>`;
+            const avatarM = m.photoM ? `<img src="${m.photoM}" class="avatar-sekre mr-2">` : `<div class="avatar-sekre mr-2 flex items-center justify-center text-[10px] text-slate-300 uppercase"><i class="fas fa-user uppercase"></i></div>`;
+            return `<div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm space-y-4 uppercase"><div class="flex justify-between items-center border-b border-dashed pb-3 uppercase"><span class="bg-purple-100 text-purple-700 px-4 py-1 rounded-full text-[10px] font-black uppercase italic shadow-sm uppercase">Partai ${m.p}</span><div class="flex gap-4 uppercase"><div class="text-right uppercase"><span class="label-sekre uppercase">Babak</span><select id="in-b-${i}" class="font-black text-[10px] text-slate-800 bg-slate-50 border-none p-0 outline-none uppercase"><option value="1" ${m.maxBabak==1?'selected':''}>1 Babak</option><option value="2" ${m.maxBabak==2?'selected':''}>2 Babak</option><option value="3" ${m.maxBabak==3?'selected':''}>3 Babak</option></select></div><div class="text-right uppercase"><span class="label-sekre uppercase">Durasi</span><select id="in-t-${i}" class="font-black text-[10px] text-emerald-600 bg-slate-50 border-none p-0 outline-none uppercase"><option value="60" ${m.maxTimer==60?'selected':''}>1 Menit</option><option value="90" ${m.maxTimer==90?'selected':''}>1.5 Menit</option><option value="120" ${m.maxTimer==120?'selected':''}>2 Menit</option><option value="180" ${m.maxTimer==180?'selected':''}>3 Menit</option></select></div></div></div><div class="grid grid-cols-2 gap-3 uppercase"><div><label class="label-sekre uppercase">Fase</label><select id="in-f-${i}" class="input-sekre bg-slate-50 uppercase"><option ${m.fase==='PENYISIHAN'?'selected':''}>PENYISIHAN</option><option ${m.fase==='PEREMPAT FINAL'?'selected':''}>PEREMPAT FINAL</option><option ${m.fase==='SEMI FINAL'?'selected':''}>SEMI FINAL</option><option ${m.fase==='FINAL'?'selected':''}>FINAL</option></select></div><div><label class="label-sekre uppercase">Kategori</label><select id="in-c-${i}" class="input-sekre bg-slate-50 uppercase"><option ${m.cat==='PRA USIA DINI'?'selected':''}>PRA USIA DINI</option><option ${m.cat==='USIA DINI'?'selected':''}>USIA DINI</option><option ${m.cat==='PRA REMAJA'?'selected':''}>PRA REMAJA</option><option ${m.cat==='REMAJA'?'selected':''}>REMAJA</option><option ${m.cat==='DEWASA'?'selected':''}>DEWASA</option></select></div><div><label class="label-sekre uppercase">Kelas</label><select id="in-k-${i}" class="input-sekre bg-slate-50 uppercase">${['A','B','C','D','E','F','G','H','I','J','K','L','BEBAS'].map(k => `<option ${m.kelas===k?'selected':''}>${k}</option>`).join('')}</select></div><div><label class="label-sekre uppercase">Golongan</label><select id="in-g-${i}" class="input-sekre bg-slate-50 uppercase"><option ${m.gender==='PUTRA'?'selected':''}>PUTRA</option><option ${m.gender==='PUTRI'?'selected':''}>PUTRI</option></select></div></div><div class="bg-blue-600 p-3 rounded-2xl border border-blue-700 shadow-md uppercase"><div class="flex items-center mb-2 uppercase">${avatarB}<input id="in-bn-${i}" value="${m.b}" placeholder="NAMA LENGKAP BIRU" class="input-sekre bg-white/10 text-white placeholder-white/50 border-white/20 font-bold uppercase"></div><input id="in-bk-${i}" value="${m.kb}" placeholder="KONTINGEN BIRU" class="input-sekre bg-white/10 text-white placeholder-white/50 border-white/20 font-bold uppercase"></div><div class="bg-red-600 p-3 rounded-2xl border border-red-700 shadow-md uppercase"><div class="flex items-center mb-2 uppercase">${avatarM}<input id="in-mn-${i}" value="${m.m}" placeholder="NAMA LENGKAP MERAH" class="input-sekre bg-white/10 text-white placeholder-white/50 border-white/20 font-bold uppercase"></div><input id="in-mk-${i}" value="${m.km}" placeholder="KONTINGEN MERAH" class="input-sekre bg-white/10 text-white placeholder-white/50 border-white/20 font-bold uppercase"></div></div>`; 
+        }).join(''); document.getElementById('sekre-page-info').innerText = `Halaman ${window.sekrePage + 1} / 100`; 
+    }
+    window.saveSekreData = function() { 
+        const start = window.sekrePage * 10; const updated = [...window.state.matches]; 
+        for(let i=start; i<start+10; i++) { 
+            const m = updated[i]; m.fase = document.getElementById(`in-f-${i}`).value.toUpperCase(); m.cat = document.getElementById(`in-c-${i}`).value.toUpperCase(); m.kelas = document.getElementById(`in-k-${i}`).value.toUpperCase(); m.gender = document.getElementById(`in-g-${i}`).value.toUpperCase(); m.maxBabak = parseInt(document.getElementById(`in-b-${i}`).value); m.maxTimer = parseInt(document.getElementById(`in-t-${i}`).value); m.m = document.getElementById(`in-mn-${i}`).value.toUpperCase(); m.km = document.getElementById(`in-mk-${i}`).value.toUpperCase(); m.b = document.getElementById(`in-bn-${i}`).value.toUpperCase(); m.kb = document.getElementById(`in-bk-${i}`).value.toUpperCase(); 
+        } 
+        window.broadcast('matches', updated); showNotif(); 
+    }
+    window.changeSekrePage = function(v) { let n = window.sekrePage + v; if(n >= 0 && n < 100) { window.sekrePage = n; renderSekreForm(); } }
+    window.renderOperatorTable = function() { const body = document.getElementById('operator-table-body'); const start = window.operatorPage * 10; const pageMatches = window.state.matches.filter(m => m.m || m.b).slice(start, start + 10); body.innerHTML = pageMatches.map((m, i) => { const isB = window.state.bertandingIdx === m.p-1, isP = window.state.persiapanIdx === m.p-1, isS = m.status === 'selesai'; return `<tr class="border-b uppercase"><td class="p-2 uppercase">${start + i + 1}</td><td class="p-2 uppercase leading-tight uppercase">PARTAI ${m.p}<br>${m.fase}<br>${m.kelas} ${m.cat}<br>${m.gender}</td><td class="p-2 uppercase uppercase"><div class="text-red-600 uppercase">${m.m}</div><div class="text-[6px] text-slate-400 font-bold uppercase">${m.km}</div><div class="text-slate-300 my-0.5 uppercase">VS</div><div class="text-blue-600 uppercase">${m.b}</div><div class="text-[6px] text-slate-400 font-bold uppercase">${m.kb}</div></td><td class="p-2 uppercase"><div class="flex flex-col gap-1 uppercase"><button onclick="setMatchStatus(${m.p-1}, 'bertanding')" class="op-btn ${isB?'btn-bertanding':'btn-inactive'} uppercase">Tanding</button><button onclick="setMatchStatus(${m.p-1}, 'persiapan')" class="op-btn ${isP?'btn-persiapan':'btn-inactive'} uppercase">Siap</button><button onclick="setMatchStatus(${m.p-1}, 'selesai')" class="op-btn ${isS?'btn-selesai':'btn-inactive'} uppercase">Finish</button></div></td><td class="p-2 uppercase"><button onclick="editMatch(${m.p-1})" class="text-blue-500 mr-2 active:scale-90 transition-all uppercase"><i class="fas fa-edit uppercase"></i></button><button onclick="deleteMatch(${m.p-1})" class="text-red-500 active:scale-90 transition-all uppercase"><i class="fas fa-trash uppercase"></i></button></td></tr>`; }).join(''); const total = window.state.matches.filter(m => m.m || m.b).length; document.getElementById('op-page-info').innerText = `Hal ${window.operatorPage + 1} / ${Math.max(1, Math.ceil(total/10))}`; }
+    window.changeOperatorPage = function(v) { const total = window.state.matches.filter(m => m.m || m.b).length; const max = Math.max(0, Math.ceil(total/10)-1); let n = window.operatorPage+v; if(n>=0 && n<=max){window.operatorPage=n;renderOperatorTable();} }
+    window.editMatch = function(idx) { window.sekrePage = Math.floor(idx / 10); changeScreen('sekretaris'); }
+    window.deleteMatch = function(idx) { if(confirm("Hapus data partai ini?")) { const updated = [...window.state.matches]; updated[idx] = { ...INITIAL_STATE.matches[0], p: idx+1 }; window.broadcast('matches', updated); } }
+    function processTieBreak(mb, tm, tb) {
+        const penB = (window.state.biru.penHistory || []).length; const penM = (window.state.merah.penHistory || []).length; const techB = (window.state.biru.pukulanFreq || 0) + (window.state.biru.tendanganFreq || 0); const techM = (window.state.merah.pukulanFreq || 0) + (window.state.merah.tendanganFreq || 0); const tableBody = document.getElementById('tie-table-body'); tableBody.innerHTML = `<tr class="tie-row-blue uppercase"><td>BIRU</td><td>${penB}</td><td>${techB}</td></tr><tr class="tie-row-red uppercase"><td>MERAH</td><td>${penM}</td><td>${techM}</td></tr>`; const winBox = document.getElementById('tie-winner-box'); const sameNotif = document.getElementById('tie-same-notif'); winBox.classList.add('hidden'); sameNotif.classList.add('hidden');
+        let winSide = ""; if (penB < penM) winSide = "biru"; else if (penM < penB) winSide = "merah"; else { if (techB > techM) winSide = "biru"; else if (techM > techB) winSide = "merah"; else winSide = "tie"; }
+        if (winSide === "tie") sameNotif.classList.remove('hidden'); else { winBox.classList.remove('hidden', 'sudut-biru-bg', 'sudut-merah-bg'); winBox.classList.add(winSide === 'biru' ? 'sudut-biru-bg' : 'sudut-merah-bg'); document.getElementById('tie-win-name').innerText = winSide === 'biru' ? mb.b : mb.m; document.getElementById('tie-win-kont').innerText = winSide === 'biru' ? mb.kb : mb.km; }
+        openModal('modal-tie-result'); return winSide;
+    }
+    function propagateWinner(currentMatchIdx) {
+        const m = window.state.matches[currentMatchIdx]; if (!m.nextP) return; const nextIdx = m.nextP.p - 1; const nextMatch = { ...window.state.matches[nextIdx] }; const winnerName = m.winner; const winnerKont = (m.winnerSide === 'biru') ? m.kb : m.km; const winnerPhoto = (m.winnerSide === 'biru') ? m.photoB : m.photoM; if (m.nextP.side === 'biru') { nextMatch.b = winnerName; nextMatch.kb = winnerKont; nextMatch.photoB = winnerPhoto; } else { nextMatch.m = winnerName; nextMatch.km = winnerKont; nextMatch.photoM = winnerPhoto; } const opponent = (m.nextP.side === 'biru') ? nextMatch.m : nextMatch.b; if (opponent === "BYE" && winnerName !== "BYE") { nextMatch.status = 'selesai'; nextMatch.winner = winnerName; nextMatch.winnerSide = m.nextP.side; nextMatch.totalB = 0; nextMatch.totalM = 0; window.broadcast(`matches/${nextIdx}`, nextMatch); setTimeout(() => propagateWinner(nextIdx), 100); } 
+        else { window.broadcast(`matches/${nextIdx}`, nextMatch); }
+    }
+    window.setMatchStatus = function(idx, status) { 
+        if(status === 'bertanding') { if(window.state.bertandingIdx === idx) window.broadcast('bertandingIdx', -1); else { window.broadcast('bertandingIdx', idx); window.broadcast('idx', idx); resetActiveMatchData(); window.broadcast('timer', window.state.matches[idx].maxTimer); } } 
+        else if(status === 'persiapan') { window.broadcast('persiapanIdx', (window.state.persiapanIdx === idx) ? -1 : idx); } 
+        else if(status === 'selesai') { const m = {...window.state.matches[idx]}; m.status = 'selesai'; let tm = calculateTotal('merah'), tb = calculateTotal('biru'); m.totalM = tm; m.totalB = tb; if (tm === tb) { const result = processTieBreak(m, tm, tb); m.winnerSide = result; } else { m.winnerSide = (tm > tb) ? 'merah' : 'biru'; } if (m.winnerSide !== 'tie') { m.winner = (m.winnerSide === 'merah') ? m.m : m.b; window.broadcast(`matches/${idx}`, m); setTimeout(() => propagateWinner(idx), 200); } else { m.winner = "KEPUTUSAN DEWAN"; window.broadcast(`matches/${idx}`, m); } } 
+    }
+    window.renderJadwalTable = function() { 
+        const body = document.getElementById('jadwal-table-body'); const start = window.jadwalPage * 10; const pageMatches = window.state.matches.filter(m => m.m || m.b).slice(start, start+10); 
+        body.innerHTML = pageMatches.map((m, i) => { 
+            const realIdx = m.p - 1; let scoreContent = (window.state.bertandingIdx === realIdx) ? `<div class="bg-blue-100 py-1 text-blue-800 text-[6px] uppercase">LIVE</div>` : (m.status === 'selesai') ? `<div class="py-1 text-[7px] uppercase">${m.totalB}-${m.totalM}</div>` : `<div class="py-1 uppercase">--</div>`; 
+            const isSelesai = m.status === 'selesai'; const isBye = m.m === "BYE"; const blueSlotClass = (isSelesai && m.winnerSide === 'merah') ? 'bg-gray-200 !text-slate-400' : 'bg-blue-600 text-white'; const merahSlotClass = (isBye || (isSelesai && m.winnerSide === 'biru')) ? 'bg-gray-200 !text-slate-400' : 'bg-red-500 text-white';
+            return `<tr class="border-b uppercase"><td class="p-1 border border-slate-200 uppercase">${start+i+1}</td><td class="p-1 border border-slate-200 leading-tight text-[6px] uppercase uppercase">PARTAI ${m.p}<br>${m.fase}</td><td class="p-1 border border-slate-200 ${blueSlotClass} font-bold uppercase text-[7px] truncate uppercase">${m.b}<div class="text-[5px] opacity-80 uppercase">${m.kb}</div></td><td class="p-1 border border-slate-200 bg-slate-50 text-slate-800 font-black text-[6px] leading-tight italic uppercase uppercase">${m.kelas}<br>${m.cat}<br>${m.gender}</td><td class="p-1 border border-slate-200 ${merahSlotClass} font-bold uppercase text-[7px] truncate uppercase">${m.m}<div class="text-[7px] opacity-80 uppercase">${m.km}</div></td><td class="p-0 border border-slate-200 font-black uppercase">${scoreContent}</td></tr>`; 
+        }).join(''); document.getElementById('jadwal-page-info').innerText = `Hal ${window.jadwalPage + 1} / ${Math.max(1, Math.ceil(window.state.matches.filter(m => m.m || m.b).length/10))}`; 
+    }
+    window.changeJadwalPage = function(v) { const total = window.state.matches.filter(m => m.m || m.b).length; const max = Math.max(0, Math.ceil(total/10)-1); let n = window.jadwalPage+v; if(n>=0 && n<=max){window.jadwalPage=n;renderJadwalTable();} }
+    
+    function resetActiveMatchData() { 
+        window.broadcast('babak', 1); 
+        window.broadcast('isRunning', false); 
+        window.broadcast('merah', INITIAL_STATE.merah); 
+        window.broadcast('biru', INITIAL_STATE.biru); 
+        window.broadcast('buffer', INITIAL_STATE.buffer); 
+        window.broadcast('var', INITIAL_STATE.var); 
+    }
+
+    window.finishMatch = function() { if(confirm("Selesaikan partai ini?")) setMatchStatus(window.state.idx, 'selesai'); }
+    window.nextMatch = function() { if(window.state.idx < 999) setMatchStatus(window.state.idx + 1, 'bertanding'); }
+    window.executeDis = function(s) { window.broadcast(`${s}/dis`, true); closeModal('modal-diskualifikasi'); }
+    window.executeUD = function(s) { window.broadcast(`${s}/ud`, true); closeModal('modal-ud'); }
+    window.executeWMP = function(s) { const ls = (s === 'biru') ? 'merah' : 'biru'; window.broadcast(`${ls}/wmp`, true); closeModal('modal-wmp'); }
+    window.openModal = function(id) { document.getElementById(id).classList.add('active'); }
+    window.closeModal = function(id) { document.getElementById(id).classList.remove('active'); }
+    window.showNotif = function() { const n = document.getElementById('save-ani'); n.classList.add('show'); setTimeout(()=>n.classList.remove('show'), 2000); }
+    window.deleteParticipantLoting = function(id) { if(confirm("Hapus peserta?")) { window.broadcast('participants', window.state.participants.filter(p => p.id !== id)); renderLotingTable(); } }
+    
+    window.clearAllParticipants = function() { 
+        if(confirm("Hapus semua peserta dari daftar?")) {
+            window.broadcast('participants', []); 
+            const body = document.getElementById('loting-table-body');
+            if(body) body.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-slate-300 italic uppercase">Tidak ada data ditemukan</td></tr>`;
+            document.getElementById('loting-counter-badge').innerText = `TOTAL: 0`;
+        } 
+    }
+    
+    window.clearAllMatches = function() { if(confirm("Hapus semua jadwal partai?")) window.broadcast('matches', INITIAL_STATE.matches); }
+    
+    window.exportFullPDF = function() { 
+        const element = document.getElementById('pdf-jadwal-container'); 
+        const opt = { margin: 10, filename: 'Jadwal_2 CAHAYA_Silat.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 3 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }; 
+        html2pdf().set(opt).from(element).save(); 
+    }
+    
+    window.renderLaporan = function() {
+        const mb = window.state.matches[window.state.idx]; const sM = window.state.merah; const sB = window.state.biru;
+        document.getElementById('rep-p-val').innerText = mb.p; document.getElementById('rep-k-val').innerText = mb.cat; document.getElementById('rep-g-val').innerText = `${mb.kelas} - ${mb.gender}`; document.getElementById('rep-f-val').innerText = `${mb.fase}`; document.getElementById('rep-w-val').innerText = new Date().toLocaleString('id-ID');
+        const tm = calculateTotal('merah'), tb = calculateTotal('biru');
+        document.getElementById('report-summary-body').innerHTML = `<tr><td style="color:#1e40af; font-weight:bold;">SUDUT BIRU</td><td>${mb.b || '---'}</td><td>${mb.kb || '---'}</td><td style="font-weight:900; font-size:14px;">${tb}</td></tr><tr><td style="color:#991b1b; font-weight:bold;">SUDUT MERAH</td><td>${mb.m || '---'}</td><td>${mb.km || '---'}</td><td style="font-weight:900; font-size:14px;">${tm}</td></tr>`;
+        const statsBody = document.getElementById('report-stats-body');
+        statsBody.innerHTML = `<tr><td>FREKUENSI PUKULAN</td><td>${sB.pukulanFreq || 0}</td><td>${sM.pukulanFreq || 0}</td></tr><tr><td>FREKUENSI TENDANGAN</td><td>${sB.tendanganFreq || 0}</td><td>${sM.tendanganFreq || 0}</td></tr><tr><td>TEKNIK JATUHAN (+3)</td><td>${Math.floor((sB.jat||0)/3)}</td><td>${Math.floor((sM.jat||0)/3)}</td></tr><tr><td>TOTAL SANKSI HUKUMAN</td><td>${(sB.penHistory||[]).length}</td><td>${(sM.penHistory||[]).length}</td></tr>`;
+        let juriLogHtml = "";
+        ['j1', 'j2', 'j3'].forEach((j, idx) => {
+            const bP = sB.juri[j] || [0,0,0]; const mP = sM.juri[j] || [0,0,0];
+            juriLogHtml += `<div style="margin-bottom: 10px;"><p style="font-weight:bold; font-size:9px; margin-bottom:2px;">DATA NILAI JURI ${idx+1} (DIVERIFIKASI SISTEM)</p><table class="report-table"><thead style="background:#f8fafc"><tr><th>SUDUT</th><th>BABAK 1</th><th>BABAK 2</th><th>BABAK 3</th><th>TOTAL</th></tr></thead><tbody><tr><td style="color:#1e40af; font-weight:bold;">BIRU</td><td>${bP[0]}</td><td>${bP[1]}</td><td>${bP[2]}</td><td style="font-weight:bold">${bP.reduce((a,b)=>a+b,0)}</td></tr><tr><td style="color:#991b1b; font-weight:bold;">MERAH</td><td>${mP[0]}</td><td>${mP[1]}</td><td>${mP[2]}</td><td style="font-weight:bold">${mP.reduce((a,b)=>a+b,0)}</td></tr></tbody></table></div>`;
+        });
+        document.getElementById('report-juri-logs').innerHTML = juriLogHtml;
+        let penaltyLogHtml = '<table class="report-table"><thead><tr style="background:#f8fafc"><th>BABAK</th><th>SUDUT</th><th>JENIS PELANGGARAN / SANKSI</th></tr></thead><tbody>';
+        const combinePen = []; (sB.penHistory || []).forEach(p => combinePen.push({ ...p, s: 'BIRU', color: '#1e40af' })); (sM.penHistory || []).forEach(p => combinePen.push({ ...p, s: 'MERAH', color: '#991b1b' }));
+        combinePen.sort((a,b) => a.round - b.round);
+        if(combinePen.length === 0) penaltyLogHtml += '<tr><td colspan="3">TIDAK ADA CATATAN PELANGGARAN</td></tr>';
+        else combinePen.forEach(p => { penaltyLogHtml += `<tr><td>${p.round}</td><td style="color:${p.color}; font-weight:bold">${p.s}</td><td>${p.type.toUpperCase()}</td></tr>`; });
+        penaltyLogHtml += '</tbody></table>'; document.getElementById('report-penalty-logs').innerHTML = penaltyLogHtml;
+    }
+    
+    window.exportLaporanPDF = function() {
+        const element = document.getElementById('report-content');
+        const opt = { margin: 0, filename: 'Laporan 2 Cahaya_Silat.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 3 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    window.exportBracketPDF = function() {
+        const element = document.getElementById('bracket-area-pdf');
+        const opt = { margin: 10, filename: 'Bracket_2Cahaya.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
+        html2pdf().set(opt).from(element).save();
+    }
+
+</script>
+</body>
+</html>
